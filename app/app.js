@@ -22,11 +22,14 @@ export default class Application {
     listen() {
         this.boostrap();
         this.express.listen(this.port, () => console.log(`App listening on port: ${this.port}`));
-
     }
 
     get providers(){
         return this._serviceProvider.providers;
+    }
+
+    static newInstace(){
+        return new Application
     }
 
     static run() {
