@@ -1,0 +1,22 @@
+{
+  "name": "cripto-boot",
+  "version": "1.0.0",
+  "description": "Boot para compra e venda de criptomoedas",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gleandroj/cripto-boot.git"
+  },
+  "keywords": [
+    "bitcoin"
+  ],
+  "author": "Gabriel Siqueira",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gleandroj/cripto-boot/issues"
+  },
+  "homepage": "https://github.com/gleandroj/cripto-boot#readme"
+}
