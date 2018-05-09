@@ -1,7 +1,7 @@
 import { CronJob, CronTime } from 'cron';
 import moment from 'moment';
 
-const EVERY_Minute_CRON_EXPRESSION = '* * * *';
+const EVERY_MINUTE_CRON_EXPRESSION = '* * * *';
 
 export default class BackgroundWorker {
 
@@ -58,7 +58,7 @@ export default class BackgroundWorker {
         };
 
         this.everyMinuteJob = new CronJob({
-            cronTime: EVERY_Minute_CRON_EXPRESSION,
+            cronTime: EVERY_MINUTE_CRON_EXPRESSION,
             onTick: () => consilidaVela(this.app.providers.db).then(() => { }),
             start: false,
             timeZone: 'America/Sao_Paulo'
