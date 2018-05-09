@@ -22,7 +22,6 @@ export default class BackgroundWorker {
         console.log('job every second job', this.everySecondJob.running);
 
         this.app.providers.binance.ws.candles('ETHBTC', '1m', async kline => {
-            return;
             let result = await this.app.providers.db.collection('kline').insert({
                 symbol: kline.symbol,
                 eventTime: kline.eventTime,
@@ -31,24 +30,26 @@ export default class BackgroundWorker {
                 high: parseFloat(kline.high),
                 low: parseFloat(kline.low)
             });
-            console.log(result);
         });
 
-        async function test(app) {
-            let result = await app.providers.db.collection('kline').aggregate(
+        async function test(db) {
+            let start = moment().subtract(60, "minutes").valueOf();
+            let end = moment().valueOf();
+
+            let result = await db.collection('kline').aggregate(
                 [
                     {
                         $match: {
                             eventTime: {
-                                $gte: moment().subtract(6, "minutes").valueOf(),
-                                $lt: moment().valueOf()
+                                $gte: start,
+                                $lt: end
                             }
                         }
                     },
                     {
                         $group: {
                             _id: '$symbol',
-                            count: { $sum: 1 },
+                            itemsCount: { $sum: 1 },
                             totalClose: { $sum: '$close' },
                             avgClose: { $avg: '$close' },
                             maxClose: { $max: '$close' },
@@ -56,10 +57,17 @@ export default class BackgroundWorker {
                         }
                     }
                 ]).toArray();
-            console.log(result);
+
+            result = result[0];
+            result.symbol = result._id;
+            delete result._id;
+            result.startTime = start;
+            result.endTime = end;
+            result.created_at = moment().valueOf();
+            await db.collection('velas').insert(result);
         }
 
-        test(this.app).then(() => { });
+        test(this.app.providers.db).then(() => { });
     }
 
 }
