@@ -1,13 +1,28 @@
-import Cron from 'cron';
+import { CronJob, CronTime } from 'cron';
 
-export default class BackgroundWorker{
+const EVERY_SECOND_CRON_EXPRESSION = '* * * *';
 
-    constructor(app){
+export default class BackgroundWorker {
+
+    constructor(app) {
         this.app = app;
     }
 
-    run(){
-        
+    run() {
+        // this.everySecondJob = new CronJob({
+        //     cronTime: EVERY_SECOND_CRON_EXPRESSION,
+        //     onTick: function () {
+        //         console.log(new Date());
+        //     },
+        //     start: false,
+        //     timeZone: 'America/Sao_Paulo'
+        // });
+        //this.everySecondJob.start();
+        //console.log('job every second job', this.everySecondJob.running);
+
+        this.app.providers.binance.ws.candles('ETHBTC', '1m', candle => {
+            console.log(candle)
+        });
     }
 
 }
