@@ -10,17 +10,6 @@ export default class BackgroundWorker {
     }
 
     run() {
-        this.everySecondJob = new CronJob({
-            cronTime: EVERY_SECOND_CRON_EXPRESSION,
-            onTick: function () {
-                console.log(new Date());
-            },
-            start: false,
-            timeZone: 'America/Sao_Paulo'
-        });
-        this.everySecondJob.start();
-        console.log('job every second job', this.everySecondJob.running);
-
         this.app.providers.binance.ws.candles('ETHBTC', '1m', async kline => {
             let result = await this.app.providers.db.collection('kline').insert({
                 symbol: kline.symbol,
@@ -32,7 +21,7 @@ export default class BackgroundWorker {
             });
         });
 
-        async function test(db) {
+        async function consilidaVela(db) {
             let start = moment().subtract(60, "minutes").valueOf();
             let end = moment().valueOf();
 
@@ -65,9 +54,16 @@ export default class BackgroundWorker {
             result.endTime = end;
             result.created_at = moment().valueOf();
             await db.collection('velas').insert(result);
-        }
+            console.log(result);
+        };
 
-        test(this.app.providers.db).then(() => { });
+        this.everySecondJob = new CronJob({
+            cronTime: EVERY_SECOND_CRON_EXPRESSION,
+            onTick: () => consilidaVela(this.app.providers.db).then(() => { }),
+            start: false,
+            timeZone: 'America/Sao_Paulo'
+        });
+        this.everySecondJob.start();
     }
 
 }
