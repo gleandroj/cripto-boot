@@ -9,14 +9,13 @@ export default class Application {
         this.port = process.env.port || 3000;
         this.public_dir = 'public';
         this.express = express();
-        this.boostrap();
     }
 
-    boostrap() {
+    async boostrap() {
         this.express.use('/public', express.static(this.public_dir));
         this.express.get('/api/ping', (req, res) => res.send('pong'));
         this._serviceProvider = new ServiceProvider(this);
-        this._serviceProvider.register();
+        await this._serviceProvider.register();
         this._serviceProvider.registerRoutes();
     }
 
