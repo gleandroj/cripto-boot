@@ -2,15 +2,18 @@ version: '2'
 services:
   mongo:
     image: mongo
+    restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
-  mongo-express:
-    image: node:8
-    user: "node"
-    command: "npm start"
-    working_dir: /home/node/app
-    volumes:
-      - ./:/home/node/app
-    ports:
-      - 8081:8081
+    ports: 
+      - 27017:27017
+  # mongo-express:
+  #   image: node:8
+  #   user: "node"
+  #   command: "npm start"
+  #   working_dir: /home/node/app
+  #   volumes:
+  #     - ./:/home/node/app
+  #   ports:
+  #     - 8081:8081
