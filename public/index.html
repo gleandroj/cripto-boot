@@ -21,7 +21,58 @@
         <canvas id="canvas"></canvas>
     </div>
     <script>
-        (async function start() {
+
+        function makeChart(config, lineChartData) {
+            var ctx = document.getElementById('canvas').getContext('2d');
+            Chart.Line(ctx, {
+                data: lineChartData,
+                options: {
+                    tooltips: {
+                        mode: 'index'
+                    },
+                    legend: {
+                        display: true
+                    },
+                    responsive: true,
+                    hoverMode: 'index',
+                    title: {
+                        display: true,
+                        text: 'Trading - ' + config.symbol
+                    },
+                    scales: {
+                        xAxes: [{
+                            type: 'time',
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Date'
+                            },
+                            ticks: {
+                                time: {
+                                    stepSize: config.minutes
+                                },
+                                major: {
+                                    fontStyle: 'bold',
+                                    fontColor: '#FF0000'
+                                }
+                            }
+                        }],
+                        yAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'price'
+                            },
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+        }
+
+        async function start() {
             let resp = await axios.get('/api/vela');
             let config = (await axios.get('/api/config')).data;
             config.nextExecutionTime = moment(config.nextExecutionTime);
@@ -76,57 +127,9 @@
                     }]
             };
 
-            window.onload = function () {
-                var ctx = document.getElementById('canvas').getContext('2d');
-                window.myLine = Chart.Line(ctx, {
-                    data: lineChartData,
-                    options: {
-                        tooltips: {
-                            mode: 'index'
-                        },
-                        legend: {
-                            display: true
-                        },
-                        responsive: true,
-                        hoverMode: 'index',
-                        title: {
-                            display: true,
-                            text: 'Trading - ' + config.symbol
-                        },
-                        scales: {
-                            xAxes: [{
-                                type: 'time',
-                                display: true,
-                                scaleLabel: {
-                                    display: true,
-                                    labelString: 'Date'
-                                },
-                                ticks: {
-                                    time: {
-                                        stepSize: config.minutes
-                                    },
-                                    major: {
-                                        fontStyle: 'bold',
-                                        fontColor: '#FF0000'
-                                    }
-                                }
-                            }],
-                            yAxes: [{
-                                display: true,
-                                scaleLabel: {
-                                    display: true,
-                                    labelString: 'price'
-                                },
-                                ticks: {
-                                    beginAtZero: true
-                                }
-                            }]
-                        }
-                    }
-                });
-            };
+            makeChart(config, lineChartData);
 
-            let diff = config.nextExecutionTime.add(10, 'seconds').diff(moment());
+            let diff = config.nextExecutionTime.add(5, 'seconds').diff(moment());
             if (diff > 0) {
                 console.log('Next refresh time: ' + config.nextExecutionTime.format('D/M/Y H:mm'));
                 setTimeout(() => {
@@ -134,7 +137,11 @@
                     start();
                 }, diff);
             }
-        })().then(() => { });
+        };
+
+        window.onload = function () {
+            start().then(() => { });
+        };
     </script>
 </body>
 
