@@ -127,11 +127,13 @@
             };
 
             let diff = config.nextExecutionTime.add(10, 'seconds').diff(moment());
-            console.log('Next refresh time: ' + config.nextExecutionTime.format('D/M/Y H:mm'));
-            setTimeout(() => {
-                console.log('Updating...');
-                start();
-            }, diff);
+            if (diff > 0) {
+                console.log('Next refresh time: ' + config.nextExecutionTime.format('D/M/Y H:mm'));
+                setTimeout(() => {
+                    console.log('Updating...');
+                    start();
+                }, diff);
+            }
         })().then(() => { });
     </script>
 </body>

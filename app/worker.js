@@ -1,6 +1,7 @@
 import { CronJob, CronTime } from 'cron';
 import moment from 'moment';
 import Decimal from 'decimal.js';
+import Calc from './services/calc.service';
 
 const CRON_EXPRESSION = '*/5 * * * *';
 const MINUTES = 5;
@@ -61,54 +62,25 @@ export default class BackgroundWorker {
             return;
         };
 
-        let value = {
-            last: null,
-            up: 0,
-            down: 0
-        };
-
-        result.map((current, i) => {
-            if (value.last != null) {
-                let r = (current.price - value.last.price);
-                if (r > 0) {
-                    value.up += r;
-                } else {
-                    value.down += r;
-                }
-            }
-            value.last = current;
-        });
-
-        let closePrice = parseFloat(result[result.length - 1].price);
-
-        let up = value.up / result.length;
-        let down = Math.abs(value.down) / result.length;
-
-        let fr = up / down;
-        let rsi = 100 - (100 / (1 + fr));
-
-        //Configurações Iniciais
-        let dnsens = 9; //Sensibilidade do RSI
-        let needbg = true;
-        let upsens = 100 - dnsens; //Quanto mais perto de 100 menos sensivel fica
-
-        let vela = rsi < dnsens ? 0 : rsi > upsens ? 1 : 2;
         let lastVela = await db.collection('vela').find({}).sort({ _id: -1 }).limit(1).toArray();
-        lastVela = lastVela.length > 0 ? lastVela[0] : null;
+        lastVela = lastVela.length > 0 ? lastVela[0] : {};
+        let vela = Calc.makeVela(result, lastVela.up, lastVela.down);
 
         let action = null;
 
-        if (vela == 1 && lastVela && lastVela.vela != 1)
+        if (vela.vela == 1 && lastVela && lastVela.vela != 1)
             action = 'BUY';
-        else if (lastVela && lastVela.vela == 1 && vela != 1)
+        else if (lastVela && lastVela.vela == 1 && vela.vela != 1)
             action = 'SELL';
 
         await db.collection('vela').insert(vela = {
+            up: vela.up,
+            down: vela.down,
             symbol: symbol,
-            rsi: isNaN(rsi) ? null : rsi,
-            vela: vela,
-            price: closePrice,
-            qty: result.length,
+            rsi: vela.rsi,
+            vela: vela.vela,
+            qty: vela.qty,
+            price: vela.closePrice,
             minutes: MINUTES,
             action: action,
             created_at: moment().valueOf()
