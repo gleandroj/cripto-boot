@@ -6,7 +6,7 @@ let _application = null;
 export default class Application {
 
     constructor(){
-        this.port = process.env.port || 3000;
+        this.port = process.env.PORT || 3000;
         this.public_dir = 'public';
         this.express = express();
     }
