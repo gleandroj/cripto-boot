@@ -3,9 +3,10 @@ import moment from 'moment';
 import Decimal from 'decimal.js';
 import Calc from './services/calc.service';
 
-const CRON_EXPRESSION = '*/5 * * * *';
-const MINUTES = 5;
+const MINUTES = 1;
+const CRON_EXPRESSION = `*/${MINUTES} * * * *`;
 const OUT_DATE_FORMAT = 'D/M/Y hh:mm:ss';
+const DNSENS = 9;
 
 export default class BackgroundWorker {
 
@@ -45,46 +46,35 @@ export default class BackgroundWorker {
         }, 1000);
     }
 
-    async consolidaVela(db, collectionName, symbol) {
-        let start = moment().subtract(MINUTES, "minutes").valueOf();
-        let end = moment().valueOf();
+    async consolidaVela(config, calc, db) {
+        let result = await db.collection('kline').find({
+            symbol: config.symbol
+        }).sort({ "eventTime": 1 }).limit(2).toArray();
 
-        let result = await db.collection(collectionName).find({
-            symbol: symbol,
-            eventTime: {
-                $gte: start,
-                $lt: end
-            }
-        }).sort({ "eventTime": 1 }).toArray();
-
-        if (result.length <= 0) {
+        if (result.length <= 0 || result.length < 2) {
             console.log('Nothing to analise, skipping process.');
             return;
         };
 
+        let currentPrice = result[1].price, lastPrice = result[0].price;
         let lastVela = await db.collection('vela').find({}).sort({ _id: -1 }).limit(1).toArray();
         lastVela = lastVela.length > 0 ? lastVela[0] : {};
-        let vela = Calc.makeVela(result, lastVela.up, lastVela.down);
 
-        let action = null;
 
-        if (vela.vela == 1 && lastVela && lastVela.vela != 1)
-            action = 'BUY';
-        else if (lastVela && lastVela.vela == 1 && vela.vela != 1)
-            action = 'SELL';
+        let vela = calc.makeVela(currentPrice, lastPrice, lastVela);
 
-        await db.collection('vela').insert(vela = {
-            up: vela.up,
-            down: vela.down,
-            symbol: symbol,
-            rsi: vela.rsi,
-            vela: vela.vela,
-            qty: vela.qty,
-            price: vela.closePrice,
-            minutes: MINUTES,
-            action: action,
-            created_at: moment().valueOf()
-        });
+        vela.action = null;
+        if (vela.flag == 1 && lastVela && lastVela.flag != 1)
+            vela.action = 'BUY';
+        else if (lastVela && lastVela.flag == 1 && vela.flag != 1)
+            vela.action = 'SELL';
+
+        vela.price = currentPrice;
+        vela.symbol = config.symbol;
+        vela.minutes = config.minutes;
+        vela.created_at = moment().valueOf();
+        await db.collection('vela').insert(vela);
+
         console.log('Inserted vela: ');
         console.log(vela);
     };
@@ -104,7 +94,8 @@ export default class BackgroundWorker {
                     cron: CRON_EXPRESSION,
                     running: true,
                     allowTrade: false,
-                    minutes: MINUTES
+                    minutes: MINUTES,
+                    dnsens: DNSENS
                 },
                 { upsert: true }
             );
@@ -115,6 +106,7 @@ export default class BackgroundWorker {
     }
 
     makeJob(db, startConfig) {
+        let calc = new Calc(startConfig.minutes, startConfig.dnsens);
         return new CronJob({
             cronTime: startConfig.cron,
             onTick: async () => {
@@ -125,7 +117,7 @@ export default class BackgroundWorker {
                 console.log('Current config: ');
                 console.log(current);
 
-                if (current && current.running) await this.consolidaVela(db, 'kline', current.symbol);;
+                if (current && current.running) await this.consolidaVela(current, calc, db);
 
                 console.log('Job next execution time: ' + moment(this.job.nextDates()).format(OUT_DATE_FORMAT));
                 await db.collection('config').updateOne(
@@ -138,14 +130,13 @@ export default class BackgroundWorker {
                 );
             },
             start: false,
-            timeZone: 'America/Sao_Paulo'
+            timeZone: 'America/Sao_Paulo',
+            runOnInit: true
         });
     }
 
     run() {
         this.initializeConfig().then(async (config) => {
-            console.log('Start config: ');
-            console.log(config);
             this.connectWebSocket(config.symbol);
             this.job = this.makeJob(this.app.providers.db, config);
             this.job.start();

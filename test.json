@@ -35,7 +35,9 @@
             "symbol": "ZILBTC",
             "eventTime": 1525968389819,
             "price": 0.00002149
-        },
+        }
+    ],
+    "last": [
         {
             "_id": "5af46e08157df52bfaf1124c",
             "symbol": "ZILBTC",
