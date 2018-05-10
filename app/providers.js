@@ -18,7 +18,7 @@ export default class ServiceProvider {
         const user = encodeURIComponent(process.env.MONGO_USERNAME);
         const password = encodeURIComponent(process.env.MONGO_PASSWORD);
         const authMechanism = 'DEFAULT';
-        const url = format('mongodb://%s:%s@%s:27017/?authMechanism=%s', user, password, host, authMechanism);
+        const url = process.env.MONGODB_URI ? process.env.MONGODB_URI : format('mongodb://%s:%s@%s:27017/?authMechanism=%s', user, password, host, authMechanism);
         return MongoClient.connect(url);
     }
 
