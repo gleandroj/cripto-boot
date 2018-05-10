@@ -1,1 +1,140 @@
-Hello Word!
+<!doctype html>
+<html>
+
+<head>
+    <title>Line Chart Multiple Axes</title>
+    <script src="http://www.chartjs.org/dist/2.7.2/Chart.bundle.js"></script>
+    <script src="http://www.chartjs.org/samples/latest/utils.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.1/moment.min.js"></script>
+    <style>
+        canvas {
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="width:75%;">
+        <canvas id="canvas"></canvas>
+    </div>
+    <script>
+        (async function start() {
+            let resp = await axios.get('/api/vela');
+            let config = (await axios.get('/api/config')).data;
+            config.nextExecutionTime = moment(config.nextExecutionTime);
+
+            let data = resp.data.map((v) => {
+                return { x: moment(v.created_at).format(), y: v.price }
+            });
+
+            let buyData = resp.data.map((v) => {
+                return { x: moment(v.created_at).format(), y: v.action == 'BUY' ? v.price : null }
+            }).filter((v) => v.y != null);
+
+            let sellData = resp.data.map((v) => {
+                return { x: moment(v.created_at).format(), y: v.action == 'SELL' ? v.price : null }
+            }).filter((v) => v.y != null);
+
+            var lineChartData = {
+                datasets: [
+                    {
+                        label: 'Sell',
+                        fill: false,
+                        data: sellData,
+                        pointStyle: 'rectRot',
+                        pointRadius: 10,
+                        pointHoverRadius: 10,
+                        pointBorderColor: 'red',
+                        pointBackgroundColor: 'red',
+                        borderColor: window.chartColors.red,
+                        backgroundColor: window.chartColors.red,
+                        showLine: true
+                    },
+                    {
+                        label: 'Buy',
+                        fill: false,
+                        data: buyData,
+                        borderWidth: 0,
+                        pointStyle: 'rectRot',
+                        pointRadius: 10,
+                        pointHoverRadius: 10,
+                        pointBorderColor: 'green',
+                        pointBackgroundColor: 'green',
+                        borderColor: window.chartColors.green,
+                        backgroundColor: window.chartColors.green,
+                        showLine: false
+                    },
+                    {
+                        label: 'Trading',
+                        borderColor: window.chartColors.blue,
+                        backgroundColor: window.chartColors.blue,
+                        fill: false,
+                        data: data
+                    }]
+            };
+
+            window.onload = function () {
+                var ctx = document.getElementById('canvas').getContext('2d');
+                window.myLine = Chart.Line(ctx, {
+                    data: lineChartData,
+                    options: {
+                        tooltips: {
+                            mode: 'index'
+                        },
+                        legend: {
+                            display: true
+                        },
+                        responsive: true,
+                        hoverMode: 'index',
+                        title: {
+                            display: true,
+                            text: 'Trading - ' + config.symbol
+                        },
+                        scales: {
+                            xAxes: [{
+                                type: 'time',
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Date'
+                                },
+                                ticks: {
+                                    time: {
+                                        stepSize: config.minutes
+                                    },
+                                    major: {
+                                        fontStyle: 'bold',
+                                        fontColor: '#FF0000'
+                                    }
+                                }
+                            }],
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'price'
+                                },
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }]
+                        }
+                    }
+                });
+            };
+
+            let diff = config.nextExecutionTime.add(10, 'seconds').diff(moment());
+            console.log('Next refresh time: ' + config.nextExecutionTime.format('D/M/Y H:mm'));
+            setTimeout(() => {
+                console.log('Updating...');
+                start();
+            }, diff);
+        })().then(() => { });
+    </script>
+</body>
+
+
+</html>
