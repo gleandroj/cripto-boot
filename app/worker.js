@@ -49,7 +49,7 @@ export default class BackgroundWorker {
     async consolidaVela(config, calc, db) {
         let result = await db.collection('kline').find({
             symbol: config.symbol
-        }).sort({ "eventTime": 1 }).limit(2).toArray();
+        }).sort({ "eventTime": -1 }).limit(2).toArray();
 
         if (result.length <= 0 || result.length < 2) {
             console.log('Nothing to analise, skipping process.');
@@ -57,9 +57,8 @@ export default class BackgroundWorker {
         };
 
         let currentPrice = result[1].price, lastPrice = result[0].price;
-        let lastVela = await db.collection('vela').find({}).sort({ _id: -1 }).limit(1).toArray();
+        let lastVela = await db.collection('vela').find({}).sort({ created_at: -1 }).limit(1).toArray();
         lastVela = lastVela.length > 0 ? lastVela[0] : {};
-
 
         let vela = calc.makeVela(currentPrice, lastPrice, lastVela);
 
@@ -68,7 +67,7 @@ export default class BackgroundWorker {
             vela.action = 'BUY';
         else if (lastVela && lastVela.flag == 1 && vela.flag != 1)
             vela.action = 'SELL';
-
+        console.log(currentPrice);
         vela.price = currentPrice;
         vela.symbol = config.symbol;
         vela.minutes = config.minutes;
