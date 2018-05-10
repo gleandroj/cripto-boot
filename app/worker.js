@@ -20,7 +20,7 @@ export default class BackgroundWorker {
             let result = await this.app.providers.db.collection('kline').insert({
                 symbol: candle.symbol,
                 eventTime: candle.eventTime,
-                price: candle.close
+                price: parseFloat(candle.close)
             });
             count++;
         });

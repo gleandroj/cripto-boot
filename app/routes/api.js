@@ -1,3 +1,5 @@
+import path from 'path';
+
 export default (app) => {
     let binance = app.providers.binance;
     let db = app.providers.db;
@@ -29,6 +31,10 @@ export default (app) => {
         };
     };
 
+    const get = async (req, res) => {
+        res.redirect('/public');
+    };
+    app.express.route('/').get(get);
     app.express.route('/api/vela').get(getVela);
     app.express.route('/api/kline').get(getKline);
     app.express.route('/api/config').get(getConfig);
