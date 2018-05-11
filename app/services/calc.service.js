@@ -21,6 +21,7 @@
             flag: rsi < this.dnsens ? 0 : rsi > this.upsens ? 1 : 2
         };
     }
+    
 
     makeVela(currentPrice, lastPrice, lastRSI) {
         return this.rsi(currentPrice, lastPrice, lastRSI.up || 0, lastRSI.down || 0);
