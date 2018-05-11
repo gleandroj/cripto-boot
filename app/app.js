@@ -1,17 +1,20 @@
 import express from 'express';
+import bodyParser from 'body-parser';
 import ServiceProvider from './providers';
 
 let _application = null;
 
 export default class Application {
 
-    constructor(){
+    constructor() {
         this.port = process.env.PORT || 3000;
         this.public_dir = 'public';
         this.express = express();
     }
 
     async boostrap() {
+        this.express.use(bodyParser.json());
+        this.express.use(bodyParser.urlencoded({ extended: true }));
         this.express.use('/public', express.static(this.public_dir));
         this.express.get('/api/ping', (req, res) => res.send('pong'));
         this._serviceProvider = new ServiceProvider(this);
@@ -23,11 +26,11 @@ export default class Application {
         this.express.listen(this.port, () => console.log(`App listening on port: ${this.port}`));
     }
 
-    get providers(){
+    get providers() {
         return this._serviceProvider.providers;
     }
-    
-    static get instance(){
+
+    static get instance() {
         return _application;
     }
 };

@@ -1,34 +1,100 @@
 <!doctype html>
-<html>
+<html ng-app="tradeApp">
 
 <head>
-    <title>Line Chart Multiple Axes</title>
-    <!-- Latest compiled and minified CSS -->
+    <title>Cripto Boot</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
         crossorigin="anonymous">
-
-    <!-- Optional theme -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
         crossorigin="anonymous">
+    <link rel="stylesheet" href="https://angular-cron-jobs.github.io/angular-cron-jobs/lib/angular-cron-jobs/dist/angular-cron-jobs.css">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
         crossorigin="anonymous"></script>
     <script src="https://www.chartjs.org/dist/2.7.2/Chart.bundle.js"></script>
     <script src="https://www.chartjs.org/samples/latest/utils.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/later/1.2.0/later.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettycron/0.11.0/prettycron.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.10/angular.min.js"></script>
     <style>
         canvas {
             -moz-user-select: none;
             -webkit-user-select: none;
             -ms-user-select: none;
         }
+
+        .switch {
+            visibility: hidden;
+            position: absolute;
+            margin-left: -9999px;
+        }
+
+        .switch+label {
+            display: block;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+            user-select: none;
+        }
+
+        .switch--shadow+label {
+            padding: 2px;
+            width: 40px;
+            height: 20px;
+            background-color: #dddddd;
+            border-radius: 20px;
+        }
+
+        .switch--shadow+label:before,
+        .switch--shadow+label:after {
+            display: block;
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            bottom: 1px;
+            content: "";
+        }
+
+        .switch--shadow+label:before {
+            right: 1px;
+            background-color: #f1f1f1;
+            border-radius: 20px;
+            transition: background 0.4s;
+        }
+
+        .switch--shadow+label:after {
+            width: 20px;
+            background-color: #fff;
+            border-radius: 100%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s;
+        }
+
+        .switch--shadow:checked+label:before {
+            background-color: #8ce196;
+        }
+
+        .switch--shadow:checked+label:after {
+            transform: translateX(18px);
+        }
+
+        .label {
+            display: inline-block;
+            max-width: 100%;
+            margin-bottom: 5px;
+            font-weight: 700;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.42857143;
+            color: #333;
+        }
     </style>
 </head>
 
 <body>
-    <div class="container">
+    <div class="container" ng-controller="TradeController">
         <div class="row" style="margin-top: 50px;">
             <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                 <div class="panel panel-default">
@@ -44,49 +110,36 @@
                         <h3 class="panel-title">Config</h3>
                     </div>
                     <div class="panel-body">
-                        <form>
+                        <form ng-submit="updateConfig()">
                             <div class="form-group">
                                 <label for="symbol">Symbol</label>
-                                <input type="text" class="form-control" id="symbol" placeholder="symbol">
+                                <input required type="text" ng-model="config.symbol" class="form-control" id="symbol" placeholder="symbol">
                             </div>
                             <hr/>
-                            <div class="row">
-                                <div class="col-xs-12">
-                                    <h4>Execution Time</h4>
-                                </div>
-                                <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2 form-group">
-                                    <label for="minutes">Minutes</label>
-                                    <select class="form-control input-sm">...</select>
-                                </div>
-                                <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2 form-group">
-                                    <label for="minutes">Hours</label>
-                                    <select class="form-control input-sm">...</select>
-                                </div>
-                                <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2 form-group">
-                                    <label for="minutes">Days</label>
-                                    <select class="form-control input-sm">...</select>
-                                </div>
-                                <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2 form-group">
-                                    <label for="minutes">Months</label>
-                                    <select class="form-control input-sm">...</select>
-                                </div>
-                                <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2 form-group">
-                                    <label for="minutes">Weekday</label>
-                                    <select class="form-control input-sm">...</select>
-                                </div>
-                            </div>
-
                             <div class="form-group">
                                 <label for="cron_expression">Cron Expression</label>
-                                <input class="form-control" disabled type="text" id="cron_expression">
+                                <input class="form-control" ng-model="config.cron" type="text" id="cron_expression" required>
+                                <span id="helpBlock" class="help-block">{{ getCronDescription() }}</span>
                             </div>
                             <hr/>
                             <div class="form-group">
                                 <label for="dnsens">Dnsens</label>
-                                <input class="form-control" type="text" id="dnsens">
+                                <input  class="form-control" type="text" id="dnsens" ng-model="config.dnsens" required>
                             </div>
-
-                            <button type="submit" class="btn btn-default">Submit</button>
+                            <div class="form-inline">
+                                <div class="form-group">
+                                    <span class="label">Running</span>
+                                    <input id="switch-shadow" ng-model="config.running" class="switch switch--shadow" type="checkbox">
+                                    <label for="switch-shadow"></label>
+                                </div>
+                                <div class="form-group">
+                                    <span class="label">Allow Trade</span>
+                                    <input id="allowTrade" ng-model="config.allowTrade" class="switch switch--shadow" type="checkbox">
+                                    <label for="allowTrade"></label>
+                                </div>
+                            </div>
+                            <br/>
+                            <button type="submit"class="btn btn-default">Submit</button>
                         </form>
                     </div>
                 </div>
@@ -95,166 +148,180 @@
     </div>
 
     <script>
+        angular.module('tradeApp', [])
+            .controller('TradeController', ['$scope', '$timeout', '$http', function ($scope, $timeout, $http) {
+                $scope.getCronDescription = function () {
+                    let cron = $scope.config && $scope.config.cron ? $scope.config.cron : '';
+                    return prettyCron.toString(cron);
+                };
 
-        function makeChart(config, lineChartData) {
-            let ctx = document.getElementById('canvas').getContext('2d');
-            return Chart.Line(ctx, {
-                data: lineChartData,
-                options: {
-                    legend: {
-                        display: true
-                    },
-                    responsive: true,
-                    hoverMode: 'index',
-                    title: {
-                        display: true,
-                        text: 'Trading - ' + config.symbol
-                    },
-                    scales: {
-                        xAxes: [{
-                            type: 'time',
-                            display: true,
-                            scaleLabel: {
-                                display: true,
-                                labelString: 'Date'
+                $scope.makeChart = function (config, lineChartData) {
+                    let ctx = document.getElementById('canvas').getContext('2d');
+                    return Chart.Line(ctx, {
+                        data: lineChartData,
+                        options: {
+                            legend: {
+                                display: true
                             },
-                            ticks: {
-                                time: {
-                                    stepSize: config.minutes
-                                },
-                                major: {
-                                    fontStyle: 'bold',
-                                    fontColor: '#FF0000'
-                                }
-                            }
-                        }],
-                        yAxes: [{
-                            display: true,
-                            scaleLabel: {
+                            responsive: true,
+                            hoverMode: 'index',
+                            title: {
                                 display: true,
-                                labelString: 'price'
+                                text: 'Trading - ' + config.symbol
                             },
-                            ticks: {
-                                beginAtZero: true
+                            scales: {
+                                xAxes: [{
+                                    type: 'time',
+                                    display: true,
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: 'Date'
+                                    },
+                                    ticks: {
+                                        time: {
+                                            stepSize: config.minutes
+                                        },
+                                        major: {
+                                            fontStyle: 'bold',
+                                            fontColor: '#FF0000'
+                                        }
+                                    }
+                                }],
+                                yAxes: [{
+                                    display: true,
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: 'price'
+                                    },
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                }]
                             }
-                        }]
+                        }
+                    });
+                };
+
+                $scope.makeData = function (data) {
+                    let tradeData = data.map((v) => {
+                        return { x: moment(v.created_at).format(), y: v.price }
+                    });
+
+                    let buyData = data.map((v) => {
+                        return { x: moment(v.created_at).format(), y: v.action == 'BUY' ? v.price : null }
+                    }).filter((v) => v.y != null);
+
+                    let sellData = data.map((v) => {
+                        return { x: moment(v.created_at).format(), y: v.action == 'SELL' ? v.price : null }
+                    }).filter((v) => v.y != null);
+
+                    return {
+                        tradeData: tradeData,
+                        buyData: buyData,
+                        sellData: sellData
+                    };
+                };
+
+                $scope.getServerData = async function () {
+                    let resp = (await $http.get('/api/vela')).data;
+                    let config = (await $http.get('/api/config')).data;
+                    config.nextExecutionTime = moment(config.nextExecutionTime);
+                    return {
+                        data: resp,
+                        config: config
+                    };
+                };
+
+                $scope.update = async function (chart) {
+                    let resp = await $scope.getServerData();
+                    let data = $scope.makeData(resp.data);
+                    let sellDT = chart.data.datasets.find((d) => d.label == 'Sell');
+                    let buyDT = chart.data.datasets.find((d) => d.label == 'Buy');
+                    let tradeDT = chart.data.datasets.find((d) => d.label == 'Trading');
+
+                    sellDT.data = data.sellData;
+                    buyDT.data = data.buyData;
+                    tradeDT.data = data.tradeData;
+
+                    chart.update();
+
+                    $scope.loopUpdate(chart, $scope.config);
+                };
+
+                $scope.loopUpdate = function (chart, config) {
+                    let diff = config.nextExecutionTime.add(5, 'seconds').diff(moment());
+
+                    if (diff > 0) {
+                        console.log('Next refresh time: ' + config.nextExecutionTime.format('D/M/Y H:mm'));
+                        $timeout(async () => {
+                            console.log('Updating...');
+                            await $scope.update(chart);
+                        }, diff);
                     }
-                }
-            });
-        }
+                };
 
-        function makeData(data) {
-            let tradeData = data.map((v) => {
-                return { x: moment(v.created_at).format(), y: v.price }
-            });
+                $scope.start = async function () {
+                    let resp = await $scope.getServerData();
+                    $scope.config = resp.config;
+                    let data = $scope.makeData(resp.data);
 
-            let buyData = data.map((v) => {
-                return { x: moment(v.created_at).format(), y: v.action == 'BUY' ? v.price : null }
-            }).filter((v) => v.y != null);
+                    let lineChartData = {
+                        datasets: [
+                            {
+                                label: 'Sell',
+                                fill: false,
+                                data: data.sellData,
+                                pointStyle: 'rectRot',
+                                pointRadius: 10,
+                                pointHoverRadius: 10,
+                                pointBorderColor: 'red',
+                                pointBackgroundColor: 'red',
+                                borderColor: window.chartColors.red,
+                                backgroundColor: window.chartColors.red,
+                                showLine: false
+                            },
+                            {
+                                label: 'Buy',
+                                fill: false,
+                                data: data.buyData,
+                                borderWidth: 0,
+                                pointStyle: 'rectRot',
+                                pointRadius: 10,
+                                pointHoverRadius: 10,
+                                pointBorderColor: 'green',
+                                pointBackgroundColor: 'green',
+                                borderColor: window.chartColors.green,
+                                backgroundColor: window.chartColors.green,
+                                showLine: false
+                            },
+                            {
+                                lineTension: 0,
+                                label: 'Trading',
+                                borderColor: window.chartColors.blue,
+                                backgroundColor: window.chartColors.blue,
+                                fill: false,
+                                radius: 0,
+                                data: data.tradeData
+                            }]
+                    };
 
-            let sellData = data.map((v) => {
-                return { x: moment(v.created_at).format(), y: v.action == 'SELL' ? v.price : null }
-            }).filter((v) => v.y != null);
+                    let chart = $scope.makeChart($scope.config, lineChartData);
+                    $scope.loopUpdate(chart, $scope.config);
+                };
 
-            return {
-                tradeData: tradeData,
-                buyData: buyData,
-                sellData: sellData
-            };
-        }
+                $scope.start().then(() => {
+                    $scope.$applyAsync();
+                });
 
-        async function getServerData() {
-            let resp = (await axios.get('/api/vela')).data;
-            let config = (await axios.get('/api/config')).data;
-            config.nextExecutionTime = moment(config.nextExecutionTime);
-            return {
-                data: resp,
-                config: config
-            };
-        }
-
-        async function update(chart) {
-            let resp = await getServerData();
-            let config = resp.config;
-            let data = makeData(resp.data);
-
-            let sellDT = chart.data.datasets.find((d) => d.label == 'Sell');
-            let buyDT = chart.data.datasets.find((d) => d.label == 'Buy');
-            let tradeDT = chart.data.datasets.find((d) => d.label == 'Trading');
-
-            sellDT.data = data.sellData;
-            buyDT.data = data.buyData;
-            tradeDT.data = data.tradeData;
-
-            chart.update();
-
-            loopUpdate(chart, config);
-        }
-
-        function loopUpdate(chart, config) {
-            let diff = config.nextExecutionTime.add(5, 'seconds').diff(moment());
-
-            if (diff > 0) {
-                console.log('Next refresh time: ' + config.nextExecutionTime.format('D/M/Y H:mm'));
-                setTimeout(async () => {
-                    console.log('Updating...');
-                    await update(chart);
-                }, diff);
-            }
-        }
-
-        async function start() {
-            let resp = await getServerData();
-            let config = resp.config;
-            let data = makeData(resp.data);
-
-            let lineChartData = {
-                datasets: [
-                    {
-                        label: 'Sell',
-                        fill: false,
-                        data: data.sellData,
-                        pointStyle: 'rectRot',
-                        pointRadius: 10,
-                        pointHoverRadius: 10,
-                        pointBorderColor: 'red',
-                        pointBackgroundColor: 'red',
-                        borderColor: window.chartColors.red,
-                        backgroundColor: window.chartColors.red,
-                        showLine: false
-                    },
-                    {
-                        label: 'Buy',
-                        fill: false,
-                        data: data.buyData,
-                        borderWidth: 0,
-                        pointStyle: 'rectRot',
-                        pointRadius: 10,
-                        pointHoverRadius: 10,
-                        pointBorderColor: 'green',
-                        pointBackgroundColor: 'green',
-                        borderColor: window.chartColors.green,
-                        backgroundColor: window.chartColors.green,
-                        showLine: false
-                    },
-                    {
-                        lineTension: 0,
-                        label: 'Trading',
-                        borderColor: window.chartColors.blue,
-                        backgroundColor: window.chartColors.blue,
-                        fill: false,
-                        radius: 0,
-                        data: data.tradeData
-                    }]
-            };
-
-            let chart = makeChart(config, lineChartData);
-            loopUpdate(chart, config);
-        };
-
-        window.onload = function () {
-            start().then(() => { });
-        };
+                $scope.updateConfig = async function () {
+                    try {
+                        $scope.config = (await $http.post('/api/config', { config: $scope.config })).data;
+                        $scope.config.nextExecutionTime = moment($scope.config.nextExecutionTime);
+                    } catch (err) {
+                        alert(err.data.description || 'Invalid data.');
+                    }
+                };
+            }]);
     </script>
 </body>
 

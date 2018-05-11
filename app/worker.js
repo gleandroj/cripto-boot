@@ -46,6 +46,11 @@ export default class BackgroundWorker {
         }, 1000);
     }
 
+    logVela(vela) {
+        console.log('Inserted vela: ');
+        console.log(`Symbol: ${vela.symbol}, Rsi: ${vela.rsi}, Up: ${vela.up}, Down: ${vela.down}, Price: ${vela.price}, Action: ${vela.action}, Flag: ${vela.flag}`);
+    }
+
     async consolidaVela(config, calc, db) {
         let result = await db.collection('kline').find({
             symbol: config.symbol
@@ -67,22 +72,19 @@ export default class BackgroundWorker {
             vela.action = 'BUY';
         else if (lastVela && lastVela.flag == 1 && vela.flag != 1)
             vela.action = 'SELL';
-        console.log(currentPrice);
+
         vela.price = currentPrice;
         vela.symbol = config.symbol;
         vela.created_at = moment().valueOf();
         await db.collection('vela').insert(vela);
-
-        console.log('Inserted vela: ');
-        console.log(vela);
+        this.logVela(vela);
     };
 
     async initializeConfig() {
-        let current = await this.app.providers.db.collection('config').findOne({
-            key: 'general'
-        });
+        let current = await this.getCurrentConfig();
 
         if (!current) {
+            let curr = moment().valueOf();
             current = await this.app.providers.db.collection('config').replaceOne(
                 { key: 'general' },
                 {
@@ -92,7 +94,9 @@ export default class BackgroundWorker {
                     cron: CRON_EXPRESSION,
                     running: true,
                     allowTrade: false,
-                    dnsens: DNSENS
+                    dnsens: DNSENS,
+                    updated_at: curr,
+                    created_at: curr
                 },
                 { upsert: true }
             );
@@ -102,21 +106,25 @@ export default class BackgroundWorker {
         return current;
     }
 
+    logConfig(current) {
+        console.log('Current config: ');
+        console.log(`Symbol: ${current.symbol}, Allow trade: ${current.allowTrade}, Running: ${current.running}, Cron: ${current.cron}, Dnsense: ${current.dnsens}.`);
+    }
+
+    async getCurrentConfig(){
+        return await this.app.providers.db.collection('config').findOne({
+            key: 'general'
+        });
+    }
+
     makeJob(db, startConfig) {
-        let calc = new Calc(startConfig.dnsens);
         return new CronJob({
             cronTime: startConfig.cron,
             onTick: async () => {
-                let current = await db.collection('config').findOne({
-                    key: 'general'
-                });
-
-                console.log('Current config: ');
-                console.log(current);
-
-                if (current && current.running) await this.consolidaVela(current, calc, db);
-
-                console.log('Job next execution time: ' + moment(this.job.nextDates()).format(OUT_DATE_FORMAT));
+                let current = await this.getCurrentConfig();
+                //this.logConfig(current);
+                await this.consolidaVela(current, new Calc(startConfig.dnsens), db);
+                this.logJobNextExecution();
                 await db.collection('config').updateOne(
                     { key: 'general' },
                     {
@@ -127,16 +135,40 @@ export default class BackgroundWorker {
                 );
             },
             start: false,
-            timeZone: 'America/Sao_Paulo',
-            runOnInit: true
+            timeZone: 'America/Sao_Paulo'
         });
+    }
+
+    logJobNextExecution() {
+        console.log('Job next execution time: ' + moment(this.job.nextDates()).format(OUT_DATE_FORMAT));
+    }
+
+    listenConfig(startConfig) {
+        let interval = setInterval(async () => {
+            let current = await this.getCurrentConfig();
+
+            if (startConfig.updated_at != current.updated_at) {
+                clearInterval(interval);
+                console.log('Job config modified');
+                if(this.job.running) this.job.stop();
+                this.job = this.makeJob(this.app.providers.db, current);
+                if (current.running) {
+                    this.job.start();
+                    this.logJobNextExecution();
+                }
+                this.listenConfig(current);
+                this.logConfig(current);
+            }
+
+        }, 1000);
     }
 
     run() {
         this.initializeConfig().then(async (config) => {
             this.connectWebSocket(config.symbol);
             this.job = this.makeJob(this.app.providers.db, config);
-            this.job.start();
+            if (config.running) this.job.start();
+            this.listenConfig(config);
             await this.app.providers.db.collection('config').updateOne(
                 { key: 'general' },
                 {
@@ -145,7 +177,9 @@ export default class BackgroundWorker {
                     }
                 }
             );
-            console.log('Service started, job next execution time: ' + moment(this.job.nextDates()).format(OUT_DATE_FORMAT));
+            console.log('Service started...');
+            this.logConfig(config);
+            if (config.running) this.logJobNextExecution();
         });
     }
 }
