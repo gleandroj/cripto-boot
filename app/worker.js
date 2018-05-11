@@ -66,10 +66,7 @@ export default class BackgroundWorker {
         lastVela = lastVela.length > 0 ? lastVela[0] : {
             price: result[0].price
         };
-        let lastPrice = lastVela.price;
-
-        let vela = calc.makeVela(currentPrice, lastPrice, lastVela);
-
+        let vela = calc.makeVela(currentPrice, lastVela);
         vela.action = null;
         if (vela.flag == 1 && lastVela && lastVela.flag != 1)
             vela.action = 'BUY';

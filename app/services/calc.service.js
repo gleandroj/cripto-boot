@@ -23,8 +23,8 @@
     }
     
 
-    makeVela(currentPrice, lastPrice, lastRSI) {
-        return this.rsi(currentPrice, lastPrice, lastRSI.up || 0, lastRSI.down || 0);
+    makeVela(currentPrice, lastRSI) {
+        return this.rsi(currentPrice, lastRSI.price || 0, lastRSI.up || 0, lastRSI.down || 0);
     }
 }
 
