@@ -28,7 +28,7 @@ export default (app) => {
         try {
             res.json(await db.collection('vela').find({
                 action: {$ne: null}
-            }).sort({created_at: -1}).toArray())
+            }).sort({created_at: -1}).toArray());
         } catch (err) {
             console.log(err);
             res.json(err);
@@ -51,7 +51,7 @@ export default (app) => {
         } catch (err) {
             return false;
         }
-    }
+    };
 
     const updateConfig = async (req, res) => {
         try {

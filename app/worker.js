@@ -3,7 +3,7 @@ import moment from 'moment';
 import Decimal from 'decimal.js';
 import Calc from './services/calc.service';
 
-const MINUTES = 1;
+const MINUTES = 5;
 const CRON_EXPRESSION = `*/${MINUTES} * * * *`;
 const OUT_DATE_FORMAT = 'D/M/Y hh:mm:ss';
 const DNSENS = 9;
@@ -54,16 +54,17 @@ export default class BackgroundWorker {
     async consolidaVela(config, calc, db) {
         let result = await db.collection('kline').find({
             symbol: config.symbol
-        }).sort({ "eventTime": -1 }).limit(2).toArray();
+        }).sort({ "eventTime": -1 }).limit(1).toArray();
 
         if (result.length <= 0 || result.length < 2) {
             console.log('Nothing to analise, skipping process.');
             return;
         };
 
-        let currentPrice = result[1].price, lastPrice = result[0].price;
+        let currentPrice = result[1].price;
         let lastVela = await db.collection('vela').find({}).sort({ created_at: -1 }).limit(1).toArray();
         lastVela = lastVela.length > 0 ? lastVela[0] : {};
+        let lastPrice = lastVela.price;
 
         let vela = calc.makeVela(currentPrice, lastPrice, lastVela);
 
