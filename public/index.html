@@ -390,10 +390,10 @@
                     let duration = moment.duration(config.nextExecutionTime.diff(moment()), 'milliseconds');
                     console.log(duration);
                     let interval = 1000;
-                    let interval = $interval(() => {
+                    let inter = $interval(() => {
                         duration = moment.duration(duration - interval, 'milliseconds');
                         if (duration <= 0) {
-                            $interval.cancel(interval);
+                            $interval.cancel(inter);
                         } else {
                             $scope.timer = (duration.years() > 0 ? duration.years() + ' years ' : '') + ((duration.years() > 0 || duration.months() > 0) ? duration.months() + ' months ' : '') + ((duration.days > 0 || duration.years() > 0 || duration.months() > 0) ? duration.days() + ' days ' : '') + duration.hours() + ":" + duration.minutes() + ":" + duration.seconds();
                         }
