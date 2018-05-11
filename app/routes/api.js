@@ -24,6 +24,17 @@ export default (app) => {
         };
     };
 
+    const getTrades = async (req, res) => {
+        try {
+            res.json(await db.collection('vela').find({
+                action: {$ne: null}
+            }).sort({created_at: -1}).toArray())
+        } catch (err) {
+            console.log(err);
+            res.json(err);
+        };
+    };
+
     const getConfig = async (req, res) => {
         try {
             res.json(await db.collection('config').findOne({ key: 'general' }));
@@ -67,5 +78,6 @@ export default (app) => {
     app.express.route('/api/vela').get(getVela);
     app.express.route('/api/kline').get(getKline);
     app.express.route('/api/config').get(getConfig);
+    app.express.route('/api/trades').get(getTrades);
     app.express.route('/api/config').post(updateConfig);
 };
