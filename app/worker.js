@@ -82,6 +82,15 @@ export default class BackgroundWorker {
 
     async initializeConfig() {
         let current = await this.getCurrentConfig();
+        let coll = await this.app.providers.db.listCollections({name: 'kline'}).toArray();
+        if (coll.length == 0) {
+            await this.app.providers.db.createCollection("kline", {
+                "capped": true,
+                "size": 100000,
+                "max": 100
+            });
+            console.log('Kline collection created.');
+        }
 
         if (!current) {
             let curr = moment().valueOf();
@@ -111,7 +120,7 @@ export default class BackgroundWorker {
         console.log(`Symbol: ${current.symbol}, Allow trade: ${current.allowTrade}, Running: ${current.running}, Cron: ${current.cron}, Dnsense: ${current.dnsens}.`);
     }
 
-    async getCurrentConfig(){
+    async getCurrentConfig() {
         return await this.app.providers.db.collection('config').findOne({
             key: 'general'
         });
@@ -150,7 +159,7 @@ export default class BackgroundWorker {
             if (startConfig.updated_at != current.updated_at) {
                 clearInterval(interval);
                 console.log('Job config modified');
-                if(this.job.running) this.job.stop();
+                if (this.job.running) this.job.stop();
                 this.job = this.makeJob(this.app.providers.db, current);
                 if (current.running) {
                     this.job.start();
