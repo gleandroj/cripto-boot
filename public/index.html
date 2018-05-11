@@ -124,7 +124,7 @@
                             <hr/>
                             <div class="form-group">
                                 <label for="dnsens">Dnsens</label>
-                                <input  class="form-control" type="text" id="dnsens" ng-model="config.dnsens" required>
+                                <input class="form-control" type="text" id="dnsens" ng-model="config.dnsens" required>
                             </div>
                             <div class="form-inline">
                                 <div class="form-group">
@@ -139,7 +139,7 @@
                                 </div>
                             </div>
                             <br/>
-                            <button type="submit"class="btn btn-default">Submit</button>
+                            <button type="submit" class="btn btn-default">Submit</button>
                         </form>
                     </div>
                 </div>
@@ -155,8 +155,9 @@
                     return prettyCron.toString(cron);
                 };
 
-                $scope.makeChart = function (config, lineChartData) {
+                $scope.makeChart = function (config, lineChartData, min, max) {
                     let ctx = document.getElementById('canvas').getContext('2d');
+                    let stepSize = max/0.99;
                     return Chart.Line(ctx, {
                         data: lineChartData,
                         options: {
@@ -194,6 +195,9 @@
                                         labelString: 'price'
                                     },
                                     ticks: {
+                                        min: min || 0,
+                                        max: max || 0,
+                                        stepSize: stepSize,
                                         beginAtZero: true
                                     }
                                 }]
@@ -235,6 +239,7 @@
                 $scope.update = async function (chart) {
                     let resp = await $scope.getServerData();
                     let data = $scope.makeData(resp.data);
+                    $scope.config = resp.config;
                     let sellDT = chart.data.datasets.find((d) => d.label == 'Sell');
                     let buyDT = chart.data.datasets.find((d) => d.label == 'Buy');
                     let tradeDT = chart.data.datasets.find((d) => d.label == 'Trading');
@@ -242,7 +247,9 @@
                     sellDT.data = data.sellData;
                     buyDT.data = data.buyData;
                     tradeDT.data = data.tradeData;
-
+                    let prices = data.tradeData.map((t) => t.y);
+                    chart.options.scales.yAxes[0].ticks.min = Math.min.apply(Math, prices);
+                    chart.options.scales.yAxes[0].ticks.max = Math.max.apply(Math, prices);
                     chart.update();
 
                     $scope.loopUpdate(chart, $scope.config);
@@ -250,7 +257,6 @@
 
                 $scope.loopUpdate = function (chart, config) {
                     let diff = config.nextExecutionTime.add(5, 'seconds').diff(moment());
-
                     if (diff > 0) {
                         console.log('Next refresh time: ' + config.nextExecutionTime.format('D/M/Y H:mm'));
                         $timeout(async () => {
@@ -264,7 +270,7 @@
                     let resp = await $scope.getServerData();
                     $scope.config = resp.config;
                     let data = $scope.makeData(resp.data);
-
+                    let prices = data.tradeData.map((t) => t.y);
                     let lineChartData = {
                         datasets: [
                             {
@@ -304,8 +310,7 @@
                                 data: data.tradeData
                             }]
                     };
-
-                    let chart = $scope.makeChart($scope.config, lineChartData);
+                    let chart = $scope.makeChart($scope.config, lineChartData, Math.min.apply(Math, prices), Math.max.apply(Math, prices));
                     $scope.loopUpdate(chart, $scope.config);
                 };
 
