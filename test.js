@@ -1,4 +1,4 @@
-/*let Calc = require("./app/services/calc.service");
+let Calc = require("./app/services/calc.service");
 let json = require('./test.json');
 
 function rma(cur, prev) {
@@ -19,13 +19,13 @@ function rsi(current, last, lastRmaUP, lastRmaDown) {
 
 let calc = (new Calc(9));
 let last = null, lastVela = {};
-
+let i = 0;
 json.last.forEach((v) => {
     if(last == null){
         last = v;
         return;
     }
-    let vela = calc.makeVela(v.price, last.price, lastVela);
+    let vela = calc.makeVela(v.price, last.price, lastVela, i == 125);
     lastVela = vela;
+    console.log(vela);
 });
-*/

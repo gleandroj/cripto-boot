@@ -7,8 +7,8 @@
     }
 
     rma(cur, prev) {
-        return (cur + prev) / 2;
-    };
+        return (0.667 * cur) + (0.333 * prev);
+    }
 
     rsi(current, last, lastRmaUP, lastRmaDown) {
         let up = this.rma(Math.max(current - last, 0), lastRmaUP);
@@ -17,14 +17,13 @@
         return {
             rsi: rsi,
             up: up,
-            down: down
+            down: down,
+            flag: rsi < this.dnsens ? 0 : rsi > this.upsens ? 1 : 2
         };
-    };
+    }
 
     makeVela(currentPrice, lastPrice, lastRSI) {
-        let rsiObj = this.rsi(currentPrice, lastPrice, lastRSI.up || 0, lastRSI.down || 0);
-        rsiObj.flag = rsiObj.rsi < this.dnsens ? 0 : rsiObj.rsi > this.upsens ? 1 : 2;
-        return rsiObj;
+        return this.rsi(currentPrice, lastPrice, lastRSI.up || 0, lastRSI.down || 0);
     }
 }
 
