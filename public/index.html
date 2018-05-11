@@ -3,6 +3,17 @@
 
 <head>
     <title>Line Chart Multiple Axes</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
+        crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+        crossorigin="anonymous"></script>
     <script src="https://www.chartjs.org/dist/2.7.2/Chart.bundle.js"></script>
     <script src="https://www.chartjs.org/samples/latest/utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.js"></script>
@@ -17,19 +28,79 @@
 </head>
 
 <body>
-    <div style="width:75%;">
-        <canvas id="canvas"></canvas>
+    <div class="container">
+        <div class="row" style="margin-top: 50px;">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Cripto Boot</h3>
+                    </div>
+                    <canvas id="canvas"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Config</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form>
+                            <div class="form-group">
+                                <label for="symbol">Symbol</label>
+                                <input type="text" class="form-control" id="symbol" placeholder="symbol">
+                            </div>
+                            <hr/>
+                            <div class="row">
+                                <div class="col-xs-12">
+                                    <h4>Execution Time</h4>
+                                </div>
+                                <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2 form-group">
+                                    <label for="minutes">Minutes</label>
+                                    <select class="form-control input-sm">...</select>
+                                </div>
+                                <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2 form-group">
+                                    <label for="minutes">Hours</label>
+                                    <select class="form-control input-sm">...</select>
+                                </div>
+                                <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2 form-group">
+                                    <label for="minutes">Days</label>
+                                    <select class="form-control input-sm">...</select>
+                                </div>
+                                <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2 form-group">
+                                    <label for="minutes">Months</label>
+                                    <select class="form-control input-sm">...</select>
+                                </div>
+                                <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2 form-group">
+                                    <label for="minutes">Weekday</label>
+                                    <select class="form-control input-sm">...</select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cron_expression">Cron Expression</label>
+                                <input class="form-control" disabled type="text" id="cron_expression">
+                            </div>
+                            <hr/>
+                            <div class="form-group">
+                                <label for="dnsens">Dnsens</label>
+                                <input class="form-control" type="text" id="dnsens">
+                            </div>
+
+                            <button type="submit" class="btn btn-default">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
     <script>
 
         function makeChart(config, lineChartData) {
-            var ctx = document.getElementById('canvas').getContext('2d');
-            Chart.Line(ctx, {
+            let ctx = document.getElementById('canvas').getContext('2d');
+            return Chart.Line(ctx, {
                 data: lineChartData,
                 options: {
-                    tooltips: {
-                        mode: 'index'
-                    },
                     legend: {
                         display: true
                     },
@@ -72,29 +143,77 @@
             });
         }
 
-        async function start() {
-            let resp = await axios.get('/api/vela');
-            let config = (await axios.get('/api/config')).data;
-            config.nextExecutionTime = moment(config.nextExecutionTime);
-
-            let data = resp.data.map((v) => {
+        function makeData(data) {
+            let tradeData = data.map((v) => {
                 return { x: moment(v.created_at).format(), y: v.price }
             });
 
-            let buyData = resp.data.map((v) => {
+            let buyData = data.map((v) => {
                 return { x: moment(v.created_at).format(), y: v.action == 'BUY' ? v.price : null }
             }).filter((v) => v.y != null);
 
-            let sellData = resp.data.map((v) => {
+            let sellData = data.map((v) => {
                 return { x: moment(v.created_at).format(), y: v.action == 'SELL' ? v.price : null }
             }).filter((v) => v.y != null);
 
-            var lineChartData = {
+            return {
+                tradeData: tradeData,
+                buyData: buyData,
+                sellData: sellData
+            };
+        }
+
+        async function getServerData() {
+            let resp = (await axios.get('/api/vela')).data;
+            let config = (await axios.get('/api/config')).data;
+            config.nextExecutionTime = moment(config.nextExecutionTime);
+            return {
+                data: resp,
+                config: config
+            };
+        }
+
+        async function update(chart) {
+            let resp = await getServerData();
+            let config = resp.config;
+            let data = makeData(resp.data);
+
+            let sellDT = chart.data.datasets.find((d) => d.label == 'Sell');
+            let buyDT = chart.data.datasets.find((d) => d.label == 'Buy');
+            let tradeDT = chart.data.datasets.find((d) => d.label == 'Trading');
+
+            sellDT.data = data.sellData;
+            buyDT.data = data.buyData;
+            tradeDT.data = data.tradeData;
+
+            chart.update();
+
+            loopUpdate(chart, config);
+        }
+
+        function loopUpdate(chart, config) {
+            let diff = config.nextExecutionTime.add(5, 'seconds').diff(moment());
+
+            if (diff > 0) {
+                console.log('Next refresh time: ' + config.nextExecutionTime.format('D/M/Y H:mm'));
+                setTimeout(async () => {
+                    console.log('Updating...');
+                    await update(chart);
+                }, diff);
+            }
+        }
+
+        async function start() {
+            let resp = await getServerData();
+            let config = resp.config;
+            let data = makeData(resp.data);
+
+            let lineChartData = {
                 datasets: [
                     {
                         label: 'Sell',
                         fill: false,
-                        data: sellData,
+                        data: data.sellData,
                         pointStyle: 'rectRot',
                         pointRadius: 10,
                         pointHoverRadius: 10,
@@ -107,7 +226,7 @@
                     {
                         label: 'Buy',
                         fill: false,
-                        data: buyData,
+                        data: data.buyData,
                         borderWidth: 0,
                         pointStyle: 'rectRot',
                         pointRadius: 10,
@@ -125,20 +244,12 @@
                         backgroundColor: window.chartColors.blue,
                         fill: false,
                         radius: 0,
-                        data: data
+                        data: data.tradeData
                     }]
             };
 
-            makeChart(config, lineChartData);
-
-            let diff = config.nextExecutionTime.add(5, 'seconds').diff(moment());
-            if (diff > 0) {
-                console.log('Next refresh time: ' + config.nextExecutionTime.format('D/M/Y H:mm'));
-                setTimeout(() => {
-                    console.log('Updating...');
-                    start();
-                }, diff);
-            }
+            let chart = makeChart(config, lineChartData);
+            loopUpdate(chart, config);
         };
 
         window.onload = function () {

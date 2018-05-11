@@ -70,7 +70,6 @@ export default class BackgroundWorker {
         console.log(currentPrice);
         vela.price = currentPrice;
         vela.symbol = config.symbol;
-        vela.minutes = config.minutes;
         vela.created_at = moment().valueOf();
         await db.collection('vela').insert(vela);
 
@@ -93,7 +92,6 @@ export default class BackgroundWorker {
                     cron: CRON_EXPRESSION,
                     running: true,
                     allowTrade: false,
-                    minutes: MINUTES,
                     dnsens: DNSENS
                 },
                 { upsert: true }
@@ -105,7 +103,7 @@ export default class BackgroundWorker {
     }
 
     makeJob(db, startConfig) {
-        let calc = new Calc(startConfig.minutes, startConfig.dnsens);
+        let calc = new Calc(startConfig.dnsens);
         return new CronJob({
             cronTime: startConfig.cron,
             onTick: async () => {
