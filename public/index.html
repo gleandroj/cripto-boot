@@ -99,7 +99,7 @@
             <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Cripto Boot</h3>
+                        <h3 class="panel-title">Cripto Boot - {{ timer }}</h3>
                     </div>
                     <canvas id="canvas"></canvas>
                 </div>
@@ -192,7 +192,7 @@
 
     <script>
         angular.module('tradeApp', [])
-            .controller('TradeController', ['$scope', '$timeout', '$http', '$filter', function ($scope, $timeout, $http, $filter) {
+            .controller('TradeController', ['$scope', '$timeout', '$http', '$filter', '$interval', function ($scope, $timeout, $http, $filter, $interval) {
                 $scope.filteredItems = [];
                 $scope.groupedItems = [];
                 $scope.itemsPerPage = 5;
@@ -359,6 +359,7 @@
                     $scope.search();
                     let data = $scope.makeData(resp.data);
                     $scope.config = resp.config;
+                    $scope.timerDown($scope.config);
                     let sellDT = chart.data.datasets.find((d) => d.label == 'Sell');
                     let buyDT = chart.data.datasets.find((d) => d.label == 'Buy');
                     let tradeDT = chart.data.datasets.find((d) => d.label == 'Trading');
@@ -385,68 +386,80 @@
                     }
                 };
 
-                $scope.start = async function () {
-                    let resp = await $scope.getServerData();
-                    $scope.config = resp.config;
-                    $scope.trades = resp.trades;
-                    let data = $scope.makeData(resp.data);
-                    let prices = data.tradeData.map((t) => t.y);
-                    let lineChartData = {
-                        datasets: [
-                            {
-                                label: 'Sell',
-                                fill: false,
-                                data: data.sellData,
-                                pointStyle: 'rectRot',
-                                pointRadius: 10,
-                                pointHoverRadius: 10,
-                                pointBorderColor: 'red',
-                                pointBackgroundColor: 'red',
-                                borderColor: 'red',
-                                backgroundColor: 'red',
-                                showLine: false
-                            },
-                            {
-                                label: 'Buy',
-                                fill: false,
-                                data: data.buyData,
-                                borderWidth: 0,
-                                pointStyle: 'rectRot',
-                                pointRadius: 10,
-                                pointHoverRadius: 10,
-                                pointBorderColor: 'green',
-                                pointBackgroundColor: 'green',
-                                borderColor: 'green',
-                                backgroundColor: 'green',
-                                showLine: false
-                            },
-                            {
-                                lineTension: 0,
-                                label: 'Trading',
-                                borderColor: window.chartColors.blue,
-                                backgroundColor: window.chartColors.blue,
-                                fill: false,
-                                radius: 0,
-                                data: data.tradeData
-                            }]
-                    };
-                    let chart = $scope.makeChart($scope.config, lineChartData, Math.min.apply(Math, prices), Math.max.apply(Math, prices));
-                    $scope.loopUpdate(chart, $scope.config);
+                $scope.timerDown = function (config) {
+                    let duration = moment.duration(config.nextExecutionTime.diff(moment()), 'milliseconds');
+                    let interval = 1000;
+                    $interval(() => {
+                        duration = moment.duration(duration - interval, 'milliseconds');
+                        $scope.timer = (duration.years() > 0 ? duration.years() + ' years ' : '') + ((duration.years() > 0 || duration.months() > 0) ? duration.months() + ' months ' : '') + ((duration.days > 0 || duration.years() > 0 || duration.months() > 0) ? duration.days() + ' days ' : '') + duration.hours() + ":" + duration.minutes() + ":" + duration.seconds();
+                    }, interval);
                 };
 
-                $scope.start().then(() => {
-                    $scope.$applyAsync();
-                    $scope.search();
-                });
+        $scope.start = async function () {
+            let resp = await $scope.getServerData();
+            $scope.config = resp.config;
+            $scope.trades = resp.trades;
+            let data = $scope.makeData(resp.data);
+            let prices = data.tradeData.map((t) => t.y);
+            let lineChartData = {
+                datasets: [
+                    {
+                        label: 'Sell',
+                        fill: false,
+                        data: data.sellData,
+                        pointStyle: 'rectRot',
+                        pointRadius: 10,
+                        pointHoverRadius: 10,
+                        pointBorderColor: 'red',
+                        pointBackgroundColor: 'red',
+                        borderColor: 'red',
+                        backgroundColor: 'red',
+                        showLine: false
+                    },
+                    {
+                        label: 'Buy',
+                        fill: false,
+                        data: data.buyData,
+                        borderWidth: 0,
+                        pointStyle: 'rectRot',
+                        pointRadius: 10,
+                        pointHoverRadius: 10,
+                        pointBorderColor: 'green',
+                        pointBackgroundColor: 'green',
+                        borderColor: 'green',
+                        backgroundColor: 'green',
+                        showLine: false
+                    },
+                    {
+                        lineTension: 0,
+                        label: 'Trading',
+                        borderColor: window.chartColors.blue,
+                        backgroundColor: window.chartColors.blue,
+                        fill: false,
+                        radius: 0,
+                        data: data.tradeData
+                    }]
+            };
+            let chart = $scope.makeChart($scope.config, lineChartData, Math.min.apply(Math, prices), Math.max.apply(Math, prices));
+            $scope.loopUpdate(chart, $scope.config);
+            $scope.timerDown($scope.config);
+        };
 
-                $scope.updateConfig = async function () {
-                    try {
-                        $scope.config = (await $http.post('/api/config', { config: $scope.config })).data;
-                        $scope.config.nextExecutionTime = moment($scope.config.nextExecutionTime);
-                    } catch (err) {
-                        alert(err.data.description || 'Invalid data.');
-                    }
-                };
+        $scope.start().then(() => {
+            $scope.$applyAsync();
+            $scope.search();
+        });
+
+        $scope.updateConfig = async function () {
+            try {
+                $scope.config = (await $http.post('/api/config', { config: $scope.config })).data;
+                $scope.config.nextExecutionTime = moment($scope.config.nextExecutionTime);
+                alert('Config updated...');
+                $scope.timerDown($scope.config);
+            } catch (err) {
+                alert(err.data.description || 'Invalid data.');
+            }
+        };
             }]);
     </script>
 </body>
