@@ -3,7 +3,7 @@ import moment from 'moment';
 import Decimal from 'decimal.js';
 import Calc from './services/calc.service';
 
-const MINUTES = 5;
+const MINUTES = 1;
 const CRON_EXPRESSION = `*/${MINUTES} * * * *`;
 const OUT_DATE_FORMAT = 'D/M/Y hh:mm:ss';
 const DNSENS = 9;
@@ -21,7 +21,7 @@ export default class BackgroundWorker {
                 symbol: candle.symbol,
                 eventTime: candle.eventTime,
                 price: ((parseFloat(candle.open) + parseFloat(candle.close) + parseFloat(candle.high) + parseFloat(candle.low)) / 4),
-                realPrice: candle.close
+                realPrice: parseFloat(candle.close)
             });
             count++;
         });
@@ -62,13 +62,19 @@ export default class BackgroundWorker {
             return;
         };
 
-        let currentPrice = result[1].price;
+        let kline = result[1];
         let lastVela = await db.collection('vela').find({}).sort({ created_at: -1 }).limit(1).toArray();
         lastVela = lastVela.length > 0 ? lastVela[0] : {
             price: result[0].price
         };
-        let vela = calc.makeVela(currentPrice, lastVela);
+        let vela = calc.makeVela(kline.price, lastVela);
+        vela.price = kline.price;
+        vela.realPrice = kline.realPrice;
+        vela.symbol = config.symbol;
         vela.action = null;
+        vela.realProfit = null;
+        vela.profit = null;
+
         if (vela.flag == 1 && lastVela && lastVela.flag != 1)
             vela.action = 'BUY';
         else if (lastVela && lastVela.flag == 1 && vela.flag != 1) {
@@ -76,11 +82,9 @@ export default class BackgroundWorker {
                 action: 'BUY'
             }).sort({ created_at: -1 }).limit(1).toArray())[0];
             vela.action = 'SELL';
-            vela.profit = ((vela.price - lastBuy.price) / vela.price);
+            vela.realProfit = ((vela.realPrice - lastBuy.realPrice) / vela.realPrice) * 100;
+            vela.profit = ((vela.price - lastBuy.price) / vela.price) * 100;
         }
-
-        vela.price = currentPrice;
-        vela.symbol = config.symbol;
         vela.created_at = moment().valueOf();
         await db.collection('vela').insert(vela);
         this.logVela(vela);
@@ -137,7 +141,6 @@ export default class BackgroundWorker {
             cronTime: startConfig.cron,
             onTick: async () => {
                 let current = await this.getCurrentConfig();
-                //this.logConfig(current);
                 await this.consolidaVela(current, new Calc(startConfig.dnsens), db);
                 this.logJobNextExecution();
                 await db.collection('config').updateOne(

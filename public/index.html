@@ -155,6 +155,7 @@
                                 <tr>
                                     <th>Symbol</th>
                                     <th>Price</th>
+                                    <th>Real Price</th>
                                     <th>Action</th>
                                     <th>Created At</th>
                                 </tr>
@@ -162,7 +163,8 @@
                             <tbody>
                                 <tr ng-class="{'success': trade.action == 'BUY', 'danger': trade.action == 'SELL'}" ng-repeat="trade in pagedItems[currentPage] track by $index">
                                     <td>{{ trade.symbol }}</td>
-                                    <td> {{ trade.price }} </td>
+                                    <td> {{ trade.price  }} {{ trade.action == 'SELL' ? '(' + trade.profit + ')' : '' }}</td>
+                                    <td> {{ trade.realPrice }} {{ trade.action == 'SELL' ? '(' + trade.realProfit + ')' : '' }}</td>
                                     <td>{{ trade.action }}</td>
                                     <td>{{ trade.created_at | date:'dd/MM/yyyy HH:mm:ss' }}</td>
                                 </tr>
@@ -285,6 +287,11 @@
                                 display: true,
                                 text: 'Trading - ' + config.symbol
                             },
+                            layout:{
+                                padding:{
+                                    top: 10
+                                }
+                            },
                             scales: {
                                 xAxes: [{
                                     type: 'time',
@@ -310,8 +317,8 @@
                                         labelString: 'price'
                                     },
                                     ticks: {
-                                        min: (min * 2) || 0,
-                                        max: (max * 2) || 0,
+                                        min: min || 0,
+                                        max: max || 0,
                                         stepSize: stepSize,
                                         beginAtZero: true
                                     }
@@ -323,7 +330,7 @@
 
                 $scope.makeData = function (data) {
                     let filteredData = data.filter((v) => v.created_at >= (moment().subtract(4, 'hours').valueOf()))
-
+                    
                     let tradeData = filteredData.map((v) => {
                         return { x: moment(v.created_at).format(), y: v.price }
                     });
@@ -370,8 +377,8 @@
                     buyDT.data = data.buyData;
                     tradeDT.data = data.tradeData;
                     let prices = data.tradeData.map((t) => t.y);
-                    chart.options.scales.yAxes[0].ticks.min = Math.min.apply(Math, prices) * 2;
-                    chart.options.scales.yAxes[0].ticks.max = Math.max.apply(Math, prices) * 2;
+                    chart.options.scales.yAxes[0].ticks.min = Math.min.apply(Math, prices);
+                    chart.options.scales.yAxes[0].ticks.max = Math.max.apply(Math, prices);
                     chart.update();
 
                     $scope.loopUpdate(chart, $scope.config);
