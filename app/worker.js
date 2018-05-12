@@ -20,7 +20,8 @@ export default class BackgroundWorker {
             let result = await this.app.providers.db.collection('kline').insert({
                 symbol: candle.symbol,
                 eventTime: candle.eventTime,
-                price: parseFloat(candle.close)
+                price: ((parseFloat(candle.open) + parseFloat(candle.close) + parseFloat(candle.high) + parseFloat(candle.low)) / 4),
+                realPrice: candle.close
             });
             count++;
         });
@@ -70,8 +71,13 @@ export default class BackgroundWorker {
         vela.action = null;
         if (vela.flag == 1 && lastVela && lastVela.flag != 1)
             vela.action = 'BUY';
-        else if (lastVela && lastVela.flag == 1 && vela.flag != 1)
+        else if (lastVela && lastVela.flag == 1 && vela.flag != 1) {
+            let lastBuy = (await db.collection('vela').find({
+                action: 'BUY'
+            }).sort({ created_at: -1 }).limit(1).toArray())[0];
             vela.action = 'SELL';
+            vela.profit = ((vela.price - lastBuy.price) / vela.price);
+        }
 
         vela.price = currentPrice;
         vela.symbol = config.symbol;
@@ -82,7 +88,7 @@ export default class BackgroundWorker {
 
     async initializeConfig() {
         let current = await this.getCurrentConfig();
-        let coll = await this.app.providers.db.listCollections({name: 'kline'}).toArray();
+        let coll = await this.app.providers.db.listCollections({ name: 'kline' }).toArray();
         if (coll.length == 0) {
             await this.app.providers.db.createCollection("kline", {
                 "capped": true,

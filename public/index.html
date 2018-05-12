@@ -322,15 +322,17 @@
                 };
 
                 $scope.makeData = function (data) {
-                    let tradeData = data.map((v) => {
+                    let filteredData = data.filter((v) => v.created_at >= (moment().subtract(4, 'hours').valueOf()))
+                    
+                    let tradeData = filteredData.map((v) => {
                         return { x: moment(v.created_at).format(), y: v.price }
                     });
 
-                    let buyData = data.map((v) => {
+                    let buyData = filteredData.map((v) => {
                         return { x: moment(v.created_at).format(), y: v.action == 'BUY' ? v.price : null }
                     }).filter((v) => v.y != null);
 
-                    let sellData = data.map((v) => {
+                    let sellData = filteredData.map((v) => {
                         return { x: moment(v.created_at).format(), y: v.action == 'SELL' ? v.price : null }
                     }).filter((v) => v.y != null);
 
