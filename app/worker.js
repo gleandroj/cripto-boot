@@ -3,7 +3,7 @@ import moment from 'moment';
 import Decimal from 'decimal.js';
 import Calc from './services/calc.service';
 
-const MINUTES = 1;
+const MINUTES = 5;
 const CRON_EXPRESSION = `*/${MINUTES} * * * *`;
 const OUT_DATE_FORMAT = 'D/M/Y hh:mm:ss';
 const DNSENS = 9;
