@@ -113,7 +113,12 @@
                         <form ng-submit="updateConfig()">
                             <div class="form-group">
                                 <label for="symbol">Symbol</label>
-                                <input required type="text" ng-model="config.symbol" class="form-control" id="symbol" placeholder="symbol">
+                                <select 
+                                    ng-model="config.symbol"
+                                    ng-options="option as option for option in symbols" required class="form-control" 
+                                
+                                    class="form-control" id="symbol">
+                                </select>
                             </div>
                             <hr/>
                             <div class="form-group">
@@ -163,7 +168,7 @@
                             <tbody>
                                 <tr ng-class="{'success': trade.action == 'BUY', 'danger': trade.action == 'SELL'}" ng-repeat="trade in pagedItems[currentPage] track by $index">
                                     <td>{{ trade.symbol }}</td>
-                                    <td> {{ trade.price  }} {{ trade.action == 'SELL' ? '(' + trade.profit + ')' : '' }}</td>
+                                    <td> {{ trade.price }} {{ trade.action == 'SELL' ? '(' + trade.profit + ')' : '' }}</td>
                                     <td> {{ trade.realPrice }} {{ trade.action == 'SELL' ? '(' + trade.realProfit + ')' : '' }}</td>
                                     <td>{{ trade.action }}</td>
                                     <td>{{ trade.created_at | date:'dd/MM/yyyy HH:mm:ss' }}</td>
@@ -200,7 +205,7 @@
                 $scope.itemsPerPage = 5;
                 $scope.pagedItems = [];
                 $scope.currentPage = 0;
-
+                let chart = null;
                 $scope.groupToPages = function () {
                     $scope.pagedItems = [];
 
@@ -284,11 +289,10 @@
                             responsive: true,
                             hoverMode: 'index',
                             title: {
-                                display: true,
-                                text: 'Trading - ' + config.symbol
+                                display: false
                             },
-                            layout:{
-                                padding:{
+                            layout: {
+                                padding: {
                                     top: 10
                                 }
                             },
@@ -301,9 +305,6 @@
                                         labelString: 'Date'
                                     },
                                     ticks: {
-                                        time: {
-                                            stepSize: config.minutes
-                                        },
                                         major: {
                                             fontStyle: 'bold',
                                             fontColor: '#FF0000'
@@ -330,7 +331,7 @@
 
                 $scope.makeData = function (data) {
                     let filteredData = data.filter((v) => v.created_at >= (moment().subtract(4, 'hours').valueOf()))
-                    
+
                     let tradeData = filteredData.map((v) => {
                         return { x: moment(v.created_at).format(), y: v.price }
                     });
@@ -364,11 +365,12 @@
 
                 $scope.update = async function (chart) {
                     let resp = await $scope.getServerData();
-                    $scope.trades = resp.trades;
-                    $scope.search();
-                    let data = $scope.makeData(resp.data);
                     $scope.config = resp.config;
+                    $scope.trades = resp.trades;
+                    let data = $scope.makeData(resp.data);
+                    $scope.search();
                     $scope.timerDown($scope.config);
+
                     let sellDT = chart.data.datasets.find((d) => d.label == 'Sell');
                     let buyDT = chart.data.datasets.find((d) => d.label == 'Buy');
                     let tradeDT = chart.data.datasets.find((d) => d.label == 'Trading');
@@ -376,6 +378,7 @@
                     sellDT.data = data.sellData;
                     buyDT.data = data.buyData;
                     tradeDT.data = data.tradeData;
+
                     let prices = data.tradeData.map((t) => t.y);
                     chart.options.scales.yAxes[0].ticks.min = Math.min.apply(Math, prices);
                     chart.options.scales.yAxes[0].ticks.max = Math.max.apply(Math, prices);
@@ -409,6 +412,7 @@
                 };
 
                 $scope.start = async function () {
+                    $scope.symbols = (await $http.get('/api/symbols')).data;
                     let resp = await $scope.getServerData();
                     $scope.config = resp.config;
                     $scope.trades = resp.trades;
@@ -453,7 +457,7 @@
                                 data: data.tradeData
                             }]
                     };
-                    let chart = $scope.makeChart($scope.config, lineChartData, Math.min.apply(Math, prices), Math.max.apply(Math, prices));
+                    chart = $scope.makeChart($scope.config, lineChartData, Math.min.apply(Math, prices), Math.max.apply(Math, prices));
                     $scope.loopUpdate(chart, $scope.config);
                     $scope.timerDown($scope.config);
                 };
@@ -465,10 +469,12 @@
 
                 $scope.updateConfig = async function () {
                     try {
+                        console.log($scope.config);
                         $scope.config = (await $http.post('/api/config', { config: $scope.config })).data;
                         $scope.config.nextExecutionTime = moment($scope.config.nextExecutionTime);
                         alert('Config updated...');
                         $scope.timerDown($scope.config);
+                        $scope.update(chart);
                     } catch (err) {
                         alert(err.data.description || 'Invalid data.');
                     }

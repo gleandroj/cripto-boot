@@ -16,7 +16,10 @@ export default class BackgroundWorker {
 
     connectWebSocket(symbol) {
         let count = 0;
-        this.app.providers.binance.ws.candles(symbol, '1m', async candle => {
+        if (this.socket) {
+            this.socket();
+        }
+        this.socket = this.app.providers.binance.ws.candles(symbol, '1m', async candle => {
             let result = await this.app.providers.db.collection('kline').insert({
                 symbol: candle.symbol,
                 eventTime: candle.eventTime,
@@ -25,7 +28,8 @@ export default class BackgroundWorker {
             });
             count++;
         });
-        setInterval(() => {
+        if (this.logInterval) clearInterval(this.logInterval);
+        this.logInterval = setInterval(() => {
             console.log('Inserted more: ' + count + ' items.');
             count = 0;
         }, 60 * 1000);
@@ -174,6 +178,8 @@ export default class BackgroundWorker {
                     this.job.start();
                     this.logJobNextExecution();
                 }
+                if (startConfig.symbol != current.symbol)
+                    this.connectWebSocket(current.symbol);
                 this.listenConfig(current);
                 this.logConfig(current);
             }

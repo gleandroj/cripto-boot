@@ -8,7 +8,10 @@ export default (app) => {
 
     const getVela = async (req, res) => {
         try {
-            res.json(await db.collection('vela').find({}).toArray())
+            let config = await db.collection('config').findOne({ key: 'general' });
+            res.json(await db.collection('vela').find({
+                symbol: config.symbol,
+            }).toArray())
         } catch (err) {
             console.log(err);
             res.json(err);
@@ -17,7 +20,10 @@ export default (app) => {
 
     const getKline = async (req, res) => {
         try {
-            res.json(await db.collection('kline').find({}).toArray())
+            let config = await db.collection('config').findOne({ key: 'general' });
+            res.json(await db.collection('kline').find({
+                symbol: config.symbol,
+            }).toArray())
         } catch (err) {
             console.log(err);
             res.json(err);
@@ -26,9 +32,11 @@ export default (app) => {
 
     const getTrades = async (req, res) => {
         try {
+            let config = await db.collection('config').findOne({ key: 'general' });
             res.json(await db.collection('vela').find({
-                action: {$ne: null}
-            }).sort({created_at: -1}).toArray());
+                symbol: config.symbol,
+                action: { $ne: null }
+            }).sort({ created_at: -1 }).toArray());
         } catch (err) {
             console.log(err);
             res.json(err);
@@ -74,10 +82,17 @@ export default (app) => {
     const get = async (req, res) => {
         res.redirect('/public');
     };
+
+    const getSymbols = async (req, res) => {
+        let data = await binance.prices();
+        res.json(Object.keys(data));
+    };
+
     app.express.route('/').get(get);
     app.express.route('/api/vela').get(getVela);
     app.express.route('/api/kline').get(getKline);
     app.express.route('/api/config').get(getConfig);
+    app.express.route('/api/symbols').get(getSymbols);
     app.express.route('/api/trades').get(getTrades);
     app.express.route('/api/config').post(updateConfig);
 };
