@@ -7,8 +7,6 @@
         crossorigin="anonymous">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
         crossorigin="anonymous">
-    <link rel="stylesheet" href="https://angular-cron-jobs.github.io/angular-cron-jobs/lib/angular-cron-jobs/dist/angular-cron-jobs.css">
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
         crossorigin="anonymous"></script>
@@ -113,11 +111,8 @@
                         <form ng-submit="updateConfig()">
                             <div class="form-group">
                                 <label for="symbol">Symbol</label>
-                                <select 
-                                    ng-model="config.symbol"
-                                    ng-options="option as option for option in symbols" required class="form-control" 
-                                
-                                    class="form-control" id="symbol">
+                                <select ng-model="config.symbol" ng-options="option as option for option in symbols" required class="form-control" class="form-control"
+                                    id="symbol">
                                 </select>
                             </div>
                             <hr/>
@@ -176,8 +171,13 @@
                                 <!--danger-->
                             </tbody>
                             <tfoot>
-                                <td colspan="6">
-                                    <ul class="pagination pull-left">
+                                <td colspan="3">
+                                    <strong>Total profit: </strong> {{ totalProfit.profit }}
+                                    <br/>
+                                    <strong>Total Real profit: </strong> {{ totalProfit.realProfit }}
+                                </td>
+                                <td colspan="2">
+                                    <ul class="pagination pull-right" style="margin: 0px !important">
                                         <li ng-class="{disabled: currentPage == 0}">
                                             <a href ng-click="prevPage()">« Prev</a>
                                         </li>
@@ -261,12 +261,10 @@
                         }
                         return false;
                     });
-                    // take care of the sorting order
                     if ($scope.sortingOrder !== '') {
                         $scope.filteredItems = $filter('orderBy')($scope.filteredItems, $scope.sortingOrder, $scope.reverse);
                     }
                     $scope.currentPage = 0;
-                    // now group by pages
                     $scope.groupToPages();
                 };
 
@@ -356,6 +354,14 @@
                     let trades = (await $http.get('/api/trades')).data;
                     let config = (await $http.get('/api/config')).data;
                     config.nextExecutionTime = moment(config.nextExecutionTime);
+                    $scope.trades = trades;
+                    let result = { profit: 0, realProfit: 0 };
+                    $scope.trades.map((p) => {
+                        result.profit += p.profit;
+                        result.realProfit += p.realProfit;
+                    });
+                    $scope.totalProfit = result;
+                    $scope.config = config;
                     return {
                         data: resp,
                         trades: trades,
@@ -365,8 +371,6 @@
 
                 $scope.update = async function (chart) {
                     let resp = await $scope.getServerData();
-                    $scope.config = resp.config;
-                    $scope.trades = resp.trades;
                     let data = $scope.makeData(resp.data);
                     $scope.search();
                     $scope.timerDown($scope.config);
@@ -414,8 +418,6 @@
                 $scope.start = async function () {
                     $scope.symbols = (await $http.get('/api/symbols')).data;
                     let resp = await $scope.getServerData();
-                    $scope.config = resp.config;
-                    $scope.trades = resp.trades;
                     let data = $scope.makeData(resp.data);
                     let prices = data.tradeData.map((t) => t.y);
                     let lineChartData = {
