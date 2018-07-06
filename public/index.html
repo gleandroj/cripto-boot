@@ -166,7 +166,7 @@
 
                 $scope.getServerData = function () {
                     $http.get('/api/setup').then((config) => {
-                        if (config) {
+                        if (config.data) {
                             $scope.setup = config.data;
                         }
                     });
