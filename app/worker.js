@@ -8,7 +8,7 @@ export default class BackgroundWorker {
 
     async initialize(){
         this.config = await this.database.getConfig().toPromise();
-        if(this.config){
+        if(this.config && this.config.running){
             log('Boot initialized.');
         }
     }
