@@ -3,484 +3,176 @@
 
 <head>
     <title>Cripto Boot</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
         crossorigin="anonymous">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
         crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/angular-toastr/dist/angular-toastr.css" />
+    <link rel="stylesheet" type="text/css" href="css/main.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
         crossorigin="anonymous"></script>
-    <script src="https://www.chartjs.org/dist/2.7.2/Chart.bundle.js"></script>
-    <script src="https://www.chartjs.org/samples/latest/utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.1/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/later/1.2.0/later.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettycron/0.11.0/prettycron.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.10/angular.min.js"></script>
-    <style>
-        canvas {
-            -moz-user-select: none;
-            -webkit-user-select: none;
-            -ms-user-select: none;
-        }
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.10/angular-animate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-sanitize/1.6.10/angular-sanitize.min.js"></script>
+    <script src="https://unpkg.com/angular-toastr/dist/angular-toastr.tpls.js"></script>
 
-        .switch {
-            visibility: hidden;
-            position: absolute;
-            margin-left: -9999px;
-        }
-
-        .switch+label {
-            display: block;
-            position: relative;
-            cursor: pointer;
-            outline: none;
-            user-select: none;
-        }
-
-        .switch--shadow+label {
-            padding: 2px;
-            width: 40px;
-            height: 20px;
-            background-color: #dddddd;
-            border-radius: 20px;
-        }
-
-        .switch--shadow+label:before,
-        .switch--shadow+label:after {
-            display: block;
-            position: absolute;
-            top: 1px;
-            left: 1px;
-            bottom: 1px;
-            content: "";
-        }
-
-        .switch--shadow+label:before {
-            right: 1px;
-            background-color: #f1f1f1;
-            border-radius: 20px;
-            transition: background 0.4s;
-        }
-
-        .switch--shadow+label:after {
-            width: 20px;
-            background-color: #fff;
-            border-radius: 100%;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            transition: all 0.4s;
-        }
-
-        .switch--shadow:checked+label:before {
-            background-color: #8ce196;
-        }
-
-        .switch--shadow:checked+label:after {
-            transform: translateX(18px);
-        }
-
-        .label {
-            display: inline-block;
-            max-width: 100%;
-            margin-bottom: 5px;
-            font-weight: 700;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            font-size: 14px;
-            line-height: 1.42857143;
-            color: #333;
-        }
-    </style>
 </head>
 
 <body>
     <div class="container" ng-controller="TradeController">
-        <div class="row" style="margin-top: 50px;">
-            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12" style="margin-top: 20px;">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Cripto Boot - {{ timer }}</h3>
-                    </div>
-                    <canvas id="canvas"></canvas>
-                </div>
-            </div>
-            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">Config</h3>
+                        <h3 class="panel-title">Setup</h3>
                     </div>
                     <div class="panel-body">
-                        <form ng-submit="updateConfig()">
-                            <div class="form-group">
-                                <label for="symbol">Symbol</label>
-                                <select ng-model="config.symbol" ng-options="option as option for option in symbols" required class="form-control" class="form-control"
-                                    id="symbol">
-                                </select>
-                            </div>
-                            <hr/>
-                            <div class="form-group">
-                                <label for="cron_expression">Cron Expression</label>
-                                <input class="form-control" ng-model="config.cron" type="text" id="cron_expression" required>
-                                <span id="helpBlock" class="help-block">{{ getCronDescription() }}</span>
-                            </div>
-                            <hr/>
-                            <div class="form-group">
-                                <label for="dnsens">Dnsens</label>
-                                <input class="form-control" type="number" id="dnsens" ng-model="config.dnsens" required>
-                            </div>
-                            <div class="form-inline">
+                        <div class="row">
+                            <div class="col-xs-12 col-md-3 col-lg-3">
                                 <div class="form-group">
+                                    <label for="dnsens">Pair</label>
+                                    <select ng-model="setup.pair" ng-options="option as option for option in pairs" class="form-control"></select>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label for="dnsens">Simultaneous Trades</label>
+                                    <input class="form-control" type="number" id="trades" ng-model="setup.simultaneous_trade" required>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label for="dnsens">Time Frame (minutes)</label>
+                                    <input class="form-control" type="number" id="time_frame" ng-model="setup.time_frame" required>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label for="dnsens">RSI Sensibility</label>
+                                    <input class="form-control" type="number" id="rsi_sensibility" ng-model="setup.rsi_sensibility" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label for="dnsens">Balance</label>
+                                    <input class="form-control" disabled type="number" id="trades" ng-model="setup.balance" required>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label for="dnsens">Maximum Amount per Trade</label>
+                                    <input class="form-control" type="number" id="time_frame" ng-model="setup.max_amout_per_trade" required>
+                                </div>
+                            </div>
+
+                            <div class="col-xs-12 col-sm-12 col-md-4 col-lg-3 pull-right">
+                                <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
                                     <span class="label">Running</span>
-                                    <input id="switch-shadow" ng-model="config.running" class="switch switch--shadow" type="checkbox">
+                                    <input id="switch-shadow" ng-model="setup.running" class="switch switch--shadow" type="checkbox">
                                     <label for="switch-shadow"></label>
                                 </div>
-                                <div class="form-group">
-                                    <span class="label">Allow Trade</span>
-                                    <input id="allowTrade" ng-model="config.allowTrade" class="switch switch--shadow" type="checkbox">
+                                <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+                                    <span class="label">Trading</span>
+                                    <input id="allowTrade" ng-model="setup.trading" class="switch switch--shadow" type="checkbox">
                                     <label for="allowTrade"></label>
                                 </div>
                             </div>
-                            <br/>
-                            <button type="submit" class="btn btn-default">Submit</button>
-                        </form>
+                        </div>
+                        <hr/>
+                        <button ng-disabled="loading" ng-click="updateConfig()" type="button" class="btn btn-default">Submit</button>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        </div>
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12" style="margin-top: 20px;">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Buy's and Sell's</h3>
+                        <h3 class="panel-title">Orders</h3>
                     </div>
-                    <div class="panel-body" style="min-height: 300px">
-                        <table class="table table-condensed" style="margin-bottom: 0px !important;">
-                            <thead>
-                                <tr>
-                                    <th>Symbol</th>
-                                    <th>Price</th>
-                                    <th>Real Price</th>
-                                    <th>Action</th>
-                                    <th>Created At</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr ng-class="{'success': trade.action == 'BUY', 'danger': trade.action == 'SELL'}" ng-repeat="trade in pagedItems[currentPage] track by $index">
-                                    <td>{{ trade.symbol }}</td>
-                                    <td> {{ trade.price }} {{ trade.action == 'SELL' ? '(' + trade.profit + ')' : '' }}</td>
-                                    <td> {{ trade.realPrice }} {{ trade.action == 'SELL' ? '(' + trade.realProfit + ')' : '' }}</td>
-                                    <td>{{ trade.action }}</td>
-                                    <td>{{ trade.created_at | date:'dd/MM/yyyy HH:mm:ss' }}</td>
-                                </tr>
-                                <!--danger-->
-                            </tbody>
-                            <tfoot>
-                                <td colspan="3">
-                                    <strong>Total profit: </strong> {{ totalProfit.profit }}
-                                    <br/>
-                                    <strong>Total Real profit: </strong> {{ totalProfit.realProfit }}
-                                </td>
-                                <td colspan="2">
-                                    <ul class="pagination pull-right" style="margin: 0px !important">
-                                        <li ng-class="{disabled: currentPage == 0}">
-                                            <a href ng-click="prevPage()">« Prev</a>
-                                        </li>
-                                        <li ng-repeat="n in range(pagedItems.length)" ng-class="{active: n == currentPage}" ng-click="setPage()">
-                                            <a href ng-bind="n + 1">1</a>
-                                        </li>
-                                        <li ng-class="{disabled: currentPage == pagedItems.length - 1}">
-                                            <a href ng-click="nextPage()">Next »</a>
-                                        </li>
-                                    </ul>
-                                </td>
-                            </tfoot>
-                        </table>
+                    <div class="panel-body">
+                        <div class="table-responsive">
+                            <table class="table table-condensed" style="margin-bottom: 0px !important;">
+                                <thead>
+                                    <tr>
+                                        <th>Coin</th>
+                                        <th>Amount</th>
+                                        <th>Ask at (BUY)</th>
+                                        <th>Ask Price</th>
+                                        <th>Bid at (SELL)</th>
+                                        <th>Bid Price</th>
+                                        <th>Profit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                </tbody>
+                                <tfoot>
+                                    <td colspan="5">
+                                        <button type="button" class="btn btn-default">Export</button>
+                                    </td>
+                                    <td colspan="1" style="width: 15%;">
+                                        <strong>Daily Success Rate</strong>
+                                    </td>
+                                    <td colspan="1">
+                                        0%
+                                    </td>
+                                </tfoot>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
     <script>
-        angular.module('tradeApp', [])
-            .controller('TradeController', ['$scope', '$timeout', '$http', '$filter', '$interval', function ($scope, $timeout, $http, $filter, $interval) {
-                $scope.filteredItems = [];
-                $scope.groupedItems = [];
-                $scope.itemsPerPage = 5;
-                $scope.pagedItems = [];
-                $scope.currentPage = 0;
-                let chart = null;
-                $scope.groupToPages = function () {
-                    $scope.pagedItems = [];
-
-                    for (var i = 0; i < $scope.filteredItems.length; i++) {
-                        if (i % $scope.itemsPerPage === 0) {
-                            $scope.pagedItems[Math.floor(i / $scope.itemsPerPage)] = [$scope.filteredItems[i]];
-                        } else {
-                            $scope.pagedItems[Math.floor(i / $scope.itemsPerPage)].push($scope.filteredItems[i]);
-                        }
-                    }
+        angular.module('tradeApp', ['ngAnimate', 'toastr'])
+            .controller('TradeController', ['$scope', '$timeout', '$http', '$filter', '$interval', 'toastr', function ($scope, $timeout, $http, $filter, $interval, toastr) {
+                $scope.pairs = [
+                    'BTC',
+                    'BNB',
+                    'ETH',
+                    'USDT'
+                ];
+                $scope.loading = false;
+                $scope.setup = {
+                    pair: 'BTC',
+                    simultaneous_trade: 0,
+                    time_frame: 1,
+                    rsi_sensibility: 6,
+                    max_amout_per_trade: 0,
+                    balance: 0,
+                    runnig: false,
+                    trading: false
                 };
 
-                $scope.range = function (start, end) {
-                    var ret = [];
-                    if (!end) {
-                        end = start;
-                        start = 0;
-                    }
-                    for (var i = start; i < end; i++) {
-                        ret.push(i);
-                    }
-                    return ret;
-                };
-
-                $scope.prevPage = function () {
-                    if ($scope.currentPage > 0) {
-                        $scope.currentPage--;
-                    }
-                };
-
-                $scope.nextPage = function () {
-                    if ($scope.currentPage < $scope.pagedItems.length - 1) {
-                        $scope.currentPage++;
-                    }
-                };
-
-                $scope.setPage = function () {
-                    $scope.currentPage = this.n;
-                };
-
-                let searchMatch = function (haystack, needle) {
-                    if (!needle) {
-                        return true;
-                    }
-                    return haystack.toLowerCase().indexOf(needle.toLowerCase()) !== -1;
-                };
-
-                $scope.search = function () {
-                    $scope.filteredItems = $filter('filter')($scope.trades, function (item) {
-                        for (var attr in item) {
-                            if (searchMatch(item[attr], $scope.query))
-                                return true;
-                        }
-                        return false;
+                $scope.updateConfig = function () {
+                    $scope.loading = true;
+                    $http.post('/api/setup', $scope.setup).then(() => {
+                        toastr.success('Configurações alteradas com sucesso.', 'Sucesso!');
+                        $scope.loading = false;
+                    }, () => {
+                        $scope.loading = false;
                     });
-                    if ($scope.sortingOrder !== '') {
-                        $scope.filteredItems = $filter('orderBy')($scope.filteredItems, $scope.sortingOrder, $scope.reverse);
-                    }
-                    $scope.currentPage = 0;
-                    $scope.groupToPages();
                 };
 
-                $scope.getCronDescription = function () {
-                    let cron = $scope.config && $scope.config.cron ? $scope.config.cron : '';
-                    return prettyCron.toString(cron);
-                };
-
-                $scope.makeChart = function (config, lineChartData, min, max) {
-                    let ctx = document.getElementById('canvas').getContext('2d');
-                    max = max && max > 0 ? max : 1;
-                    min = min && min > 0 ? min : 1;
-                    let stepSize = max / 0.99;
-                    return Chart.Line(ctx, {
-                        data: lineChartData,
-                        options: {
-                            legend: {
-                                display: true
-                            },
-                            responsive: true,
-                            hoverMode: 'index',
-                            title: {
-                                display: false
-                            },
-                            layout: {
-                                padding: {
-                                    top: 10
-                                }
-                            },
-                            scales: {
-                                xAxes: [{
-                                    type: 'time',
-                                    display: true,
-                                    scaleLabel: {
-                                        display: true,
-                                        labelString: 'Date'
-                                    },
-                                    ticks: {
-                                        major: {
-                                            fontStyle: 'bold',
-                                            fontColor: '#FF0000'
-                                        }
-                                    }
-                                }],
-                                yAxes: [{
-                                    display: true,
-                                    scaleLabel: {
-                                        display: true,
-                                        labelString: 'price'
-                                    },
-                                    ticks: {
-                                        min: min || 0,
-                                        max: max || 0,
-                                        stepSize: stepSize,
-                                        beginAtZero: true
-                                    }
-                                }]
-                            }
+                $scope.getServerData = function () {
+                    $http.get('/api/setup').then((config) => {
+                        if (config) {
+                            $scope.setup = config.data;
                         }
                     });
                 };
 
-                $scope.makeData = function (data) {
-                    let filteredData = data.filter((v) => v.created_at >= (moment().subtract(4, 'hours').valueOf()))
-
-                    let tradeData = filteredData.map((v) => {
-                        return { x: moment(v.created_at).format(), y: v.price }
-                    });
-
-                    let buyData = filteredData.map((v) => {
-                        return { x: moment(v.created_at).format(), y: v.action == 'BUY' ? v.price : null }
-                    }).filter((v) => v.y != null);
-
-                    let sellData = filteredData.map((v) => {
-                        return { x: moment(v.created_at).format(), y: v.action == 'SELL' ? v.price : null }
-                    }).filter((v) => v.y != null);
-
-                    return {
-                        tradeData: tradeData,
-                        buyData: buyData,
-                        sellData: sellData
-                    };
-                };
-
-                $scope.getServerData = async function () {
-                    let resp = (await $http.get('/api/vela')).data;
-                    let trades = (await $http.get('/api/trades')).data;
-                    let config = (await $http.get('/api/config')).data;
-                    config.nextExecutionTime = moment(config.nextExecutionTime);
-                    $scope.trades = trades;
-                    let result = { profit: 0, realProfit: 0 };
-                    $scope.trades.map((p) => {
-                        result.profit += p.profit;
-                        result.realProfit += p.realProfit;
-                    });
-                    $scope.totalProfit = result;
-                    $scope.config = config;
-                    return {
-                        data: resp,
-                        trades: trades,
-                        config: config
-                    };
-                };
-
-                $scope.update = async function (chart) {
-                    let resp = await $scope.getServerData();
-                    let data = $scope.makeData(resp.data);
-                    $scope.search();
-                    $scope.timerDown($scope.config);
-
-                    let sellDT = chart.data.datasets.find((d) => d.label == 'Sell');
-                    let buyDT = chart.data.datasets.find((d) => d.label == 'Buy');
-                    let tradeDT = chart.data.datasets.find((d) => d.label == 'Trading');
-
-                    sellDT.data = data.sellData;
-                    buyDT.data = data.buyData;
-                    tradeDT.data = data.tradeData;
-
-                    let prices = data.tradeData.map((t) => t.y);
-                    chart.options.scales.yAxes[0].ticks.min = Math.min.apply(Math, prices);
-                    chart.options.scales.yAxes[0].ticks.max = Math.max.apply(Math, prices);
-                    chart.update();
-
-                    $scope.loopUpdate(chart, $scope.config);
-                };
-
-                $scope.loopUpdate = function (chart, config) {
-                    let diff = config.nextExecutionTime.add(5, 'seconds').diff(moment());
-                    if (diff > 0) {
-                        console.log('Next refresh time: ' + config.nextExecutionTime.format('D/M/Y H:mm'));
-                        $timeout(async () => {
-                            console.log('Updating...');
-                            await $scope.update(chart);
-                        }, diff);
-                    }
-                };
-
-                $scope.timerDown = function (config) {
-                    let duration = moment.duration(config.nextExecutionTime.diff(moment()), 'milliseconds');
-                    let interval = 1000;
-                    let inter = $interval(() => {
-                        duration = moment.duration(duration - interval, 'milliseconds');
-                        if (duration <= 0) {
-                            $interval.cancel(inter);
-                        } else {
-                            $scope.timer = (duration.years() > 0 ? duration.years() + ' years ' : '') + ((duration.years() > 0 || duration.months() > 0) ? duration.months() + ' months ' : '') + ((duration.days > 0 || duration.years() > 0 || duration.months() > 0) ? duration.days() + ' days ' : '') + duration.hours() + ":" + duration.minutes() + ":" + duration.seconds();
-                        }
-                    }, interval);
-                };
-
-                $scope.start = async function () {
-                    $scope.symbols = (await $http.get('/api/symbols')).data;
-                    let resp = await $scope.getServerData();
-                    let data = $scope.makeData(resp.data);
-                    let prices = data.tradeData.map((t) => t.y);
-                    let lineChartData = {
-                        datasets: [
-                            {
-                                label: 'Sell',
-                                fill: false,
-                                data: data.sellData,
-                                pointStyle: 'rectRot',
-                                pointRadius: 10,
-                                pointHoverRadius: 10,
-                                pointBorderColor: 'red',
-                                pointBackgroundColor: 'red',
-                                borderColor: 'red',
-                                backgroundColor: 'red',
-                                showLine: false
-                            },
-                            {
-                                label: 'Buy',
-                                fill: false,
-                                data: data.buyData,
-                                borderWidth: 0,
-                                pointStyle: 'rectRot',
-                                pointRadius: 10,
-                                pointHoverRadius: 10,
-                                pointBorderColor: 'green',
-                                pointBackgroundColor: 'green',
-                                borderColor: 'green',
-                                backgroundColor: 'green',
-                                showLine: false
-                            },
-                            {
-                                lineTension: 0,
-                                label: 'Trading',
-                                borderColor: window.chartColors.blue,
-                                backgroundColor: window.chartColors.blue,
-                                fill: false,
-                                radius: 0,
-                                data: data.tradeData
-                            }]
-                    };
-                    chart = $scope.makeChart($scope.config, lineChartData, Math.min.apply(Math, prices), Math.max.apply(Math, prices));
-                    $scope.loopUpdate(chart, $scope.config);
-                    $scope.timerDown($scope.config);
-                };
-
-                $scope.start().then(() => {
-                    $scope.$applyAsync();
-                    $scope.search();
-                });
-
-                $scope.updateConfig = async function () {
-                    try {
-                        console.log($scope.config);
-                        $scope.config = (await $http.post('/api/config', { config: $scope.config })).data;
-                        $scope.config.nextExecutionTime = moment($scope.config.nextExecutionTime);
-                        alert('Config updated...');
-                        $scope.timerDown($scope.config);
-                        $scope.update(chart);
-                    } catch (err) {
-                        alert(err.data.description || 'Invalid data.');
-                    }
-                };
+                $scope.getServerData();
             }]);
     </script>
 </body>

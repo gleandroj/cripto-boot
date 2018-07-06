@@ -1,8 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import ServiceProvider from './providers';
-
-let _application = null;
+import log from './services/logger';
 
 export default class Application {
 
@@ -23,14 +22,10 @@ export default class Application {
     }
 
     listen() {
-        this.express.listen(this.port, () => console.log(`App listening on port: ${this.port}`));
+        this.express.listen(this.port, () => log(`App listening on port: ${this.port}`));
     }
 
     get providers() {
         return this._serviceProvider.providers;
-    }
-
-    static get instance() {
-        return _application;
     }
 };

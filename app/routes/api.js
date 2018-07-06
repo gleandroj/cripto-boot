@@ -1,98 +1,26 @@
-import path from 'path';
-import { CronTime } from 'cron';
-import moment from 'moment';
-
 export default (app) => {
-    let binance = app.providers.binance;
-    let db = app.providers.db;
-
-    const getVela = async (req, res) => {
-        try {
-            let config = await db.collection('config').findOne({ key: 'general' });
-            res.json(await db.collection('vela').find({
-                symbol: config.symbol,
-            }).toArray())
-        } catch (err) {
-            console.log(err);
-            res.json(err);
-        };
-    };
-
-    const getKline = async (req, res) => {
-        try {
-            let config = await db.collection('config').findOne({ key: 'general' });
-            res.json(await db.collection('kline').find({
-                symbol: config.symbol,
-            }).toArray())
-        } catch (err) {
-            console.log(err);
-            res.json(err);
-        };
-    };
-
-    const getTrades = async (req, res) => {
-        try {
-            let config = await db.collection('config').findOne({ key: 'general' });
-            res.json(await db.collection('vela').find({
-                symbol: config.symbol,
-                action: { $ne: null }
-            }).sort({ created_at: -1 }).toArray());
-        } catch (err) {
-            console.log(err);
-            res.json(err);
-        };
-    };
+    const db = app.providers.database;
 
     const getConfig = async (req, res) => {
-        try {
-            res.json(await db.collection('config').findOne({ key: 'general' }));
-        } catch (err) {
-            console.log(err);
-            res.json(err);
-        };
-    };
-
-    const isCronValid = function (cron) {
-        try {
-            (new CronTime(cron));
-            return true;
-        } catch (err) {
-            return false;
-        }
+        res.json(await db.getConfig().toPromise());
     };
 
     const updateConfig = async (req, res) => {
-        try {
-            if (!isCronValid(req.body.config.cron)) {
-                res.status(400);
-                res.json({ description: 'Invalid cron expression.' });
-                return;
-            } else {
-                delete req.body.config._id;
-                req.body.config.updated_at = moment().valueOf();
-                let config = await db.collection('config').updateOne({ key: 'general' }, { $set: req.body.config });
-                await getConfig(req, res);
-            }
-        } catch (err) {
-            console.log(err);
-            res.json(err);
-        };
+        const config = req.body;
+        res.json(await db.updateConfig(config).toPromise());
     };
 
     const get = async (req, res) => {
         res.redirect('/public');
     };
 
-    const getSymbols = async (req, res) => {
-        let data = await binance.prices();
-        res.json(Object.keys(data));
-    };
-
     app.express.route('/').get(get);
-    app.express.route('/api/vela').get(getVela);
-    app.express.route('/api/kline').get(getKline);
-    app.express.route('/api/config').get(getConfig);
-    app.express.route('/api/symbols').get(getSymbols);
-    app.express.route('/api/trades').get(getTrades);
-    app.express.route('/api/config').post(updateConfig);
+    app.express.route('/api/setup').get(getConfig);
+    app.express.route('/api/setup').post(updateConfig);
+
+    // app.express.route('/api/vela').get(getVela);
+    // app.express.route('/api/kline').get(getKline);
+    // app.express.route('/api/config').get(getConfig);
+    // app.express.route('/api/symbols').get(getSymbols);
+    // app.express.route('/api/trades').get(getTrades);
 };
