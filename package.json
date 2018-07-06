@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rimraf dist/ && babel ./ --out-dir dist/ --ignore ./node_modules,./.babelrc,./package.json,./npm-debug.log --copy-files",
     "development": "nodemon --exec babel-node index.js",
+    "heroku-postbuild": "rm -rf bin/ && node_modules/webpack/bin/webpack.js",
     "start": "node_modules/webpack/bin/webpack.js && node bin/server.js"
   },
   "repository": {
