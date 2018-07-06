@@ -19,7 +19,6 @@ export default (app) => {
         if (authCheck(req, res)) {
             res.json(await db.getConfig().toPromise());
         }
-
     };
 
     const updateConfig = async (req, res) => {

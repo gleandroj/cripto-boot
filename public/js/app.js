@@ -14,6 +14,9 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr'])
         $urlRouterProvider.otherwise('login');
     })
     .controller('LoginController', ['$scope', '$state', '$http', '$filter', '$interval', 'toastr', function ($scope, $state, $http, $filter, $interval, toastr) {
+        if (localStorage.getItem('auth-token')) {
+            $state.go('main');
+        }
         $scope.loading = false;
         $scope.credentials = {
             username: '',
@@ -25,6 +28,7 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr'])
                 (resp) => {
                     $scope.loading = false;
                     $state.go('main');
+                    localStorage.setItem('auth-token', resp.data.token);
                 },
                 (err) => {
                     $scope.loading = false;
@@ -33,7 +37,12 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr'])
             );
         };
     }])
-    .controller('TradeController', ['$scope', '$timeout', '$http', '$filter', '$interval', 'toastr', function ($scope, $timeout, $http, $filter, $interval, toastr) {
+    .controller('TradeController', ['$scope', '$state', '$http', '$filter', '$interval', 'toastr', function ($scope, $state, $http, $filter, $interval, toastr) {
+
+        if (!localStorage.getItem('auth-token')) {
+            $state.go('login');
+        }
+
         $scope.pairs = [
             'BTC',
             'BNB',
@@ -68,6 +77,20 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr'])
                     $scope.setup = config.data;
                 }
             });
+        };
+
+        $scope.logout = function () {
+            $scope.loading = true;
+            $http.get('/api/logout', $scope.credentials).then(
+                (resp) => {
+                    localStorage.removeItem('auth-token');
+                    $state.go('login');
+                },
+                (err) => {
+                    localStorage.removeItem('auth-token');
+                    $state.go('login');
+                }
+            );
         };
 
         $scope.getServerData();
