@@ -5,7 +5,7 @@ export default (app) => {
     const authCheck = function (req, res) {
         if (!req.session.token) {
             res.status(401);
-            res.json({
+            return res.json({
                 error: 'unauthenticated',
                 message: 'Não autenticado.'
             });
