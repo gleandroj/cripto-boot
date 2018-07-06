@@ -5,22 +5,30 @@ export default (app) => {
     const authCheck = function (req, res) {
         if (!req.session.token) {
             res.status(401);
-            return res.json({
+            res.json({
                 error: 'unauthenticated',
                 message: 'Não autenticado.'
             });
+            return false;
         }
+
+        return true;
     };
 
     const getConfig = async (req, res) => {
-        res.json(await db.getConfig().toPromise());
+        if (authCheck(req, res)) {
+            res.json(await db.getConfig().toPromise());
+        }
+
     };
 
     const updateConfig = async (req, res) => {
-        const config = req.body;
-        res.json(await db.updateConfig(config).toPromise());
+        if (authCheck(req, res)) {
+            const config = req.body;
+            res.json(await db.updateConfig(config).toPromise());
+        }
     };
-    
+
     const get = async (req, res) => {
         res.redirect('/public');
     };
@@ -39,10 +47,18 @@ export default (app) => {
         }
     };
 
+    const logout = (req, res) => {
+        if (authCheck(req, res)) {
+            req.session.destroy();
+            res.json({ success: true });
+        }
+    };
+
     app.express.route('/').get(get);
     app.express.route('/api/setup').get(getConfig);
     app.express.route('/api/setup').post(updateConfig);
     app.express.route('/api/login').post(login);
+    app.express.route('/api/logout').get(logout);
 
     // app.express.route('/api/vela').get(getVela);
     // app.express.route('/api/kline').get(getKline);

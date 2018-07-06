@@ -15,5 +15,7 @@ services:
     working_dir: /home/node/app
     volumes:
       - ./:/home/node/app
+    depends_on:
+      - mongo
     ports:
       - 3000:3000

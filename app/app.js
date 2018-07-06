@@ -4,7 +4,6 @@ import ServiceProvider from './providers';
 import log from './services/logger';
 import session from 'express-session';
 import mongoStore from 'connect-mongo';
-
 const MongoStore = mongoStore(session);
 
 export default class Application {
@@ -25,10 +24,8 @@ export default class Application {
         this.express.use(session({
             secret: process.env.APP_SECRET,
             resave: true,
-            saveUninitialized: false,
-            store: new MongoStore({
-              mongooseConnection: this._serviceProvider.providers.db
-            })
+            saveUninitialized: true,
+            store: new MongoStore({ db: this.providers.db })
           }));
         this._serviceProvider.registerRoutes();
     }
