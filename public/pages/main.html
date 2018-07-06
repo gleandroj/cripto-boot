@@ -1,0 +1,109 @@
+<div class="container" ng-controller="TradeController">
+    <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12" style="margin-top: 20px;">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Setup</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-xs-12 col-md-3 col-lg-3">
+                            <div class="form-group">
+                                <label for="dnsens">Pair</label>
+                                <select ng-model="setup.pair" ng-options="option as option for option in pairs" class="form-control"></select>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-md-3 col-lg-3">
+                            <div class="form-group">
+                                <label for="dnsens">Simultaneous Trades</label>
+                                <input class="form-control" type="number" id="trades" ng-model="setup.simultaneous_trade" required>
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-md-3 col-lg-3">
+                            <div class="form-group">
+                                <label for="dnsens">Time Frame (minutes)</label>
+                                <input class="form-control" type="number" id="time_frame" ng-model="setup.time_frame" required>
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-md-3 col-lg-3">
+                            <div class="form-group">
+                                <label for="dnsens">RSI Sensibility</label>
+                                <input class="form-control" type="number" id="rsi_sensibility" ng-model="setup.rsi_sensibility" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12 col-md-3 col-lg-3">
+                            <div class="form-group">
+                                <label for="dnsens">Balance</label>
+                                <input class="form-control" disabled type="number" id="trades" ng-model="setup.balance" required>
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-md-3 col-lg-3">
+                            <div class="form-group">
+                                <label for="dnsens">Maximum Amount per Trade</label>
+                                <input class="form-control" type="number" id="time_frame" ng-model="setup.max_amout_per_trade" required>
+                            </div>
+                        </div>
+
+                        <div class="col-xs-12 col-sm-12 col-md-4 col-lg-3 pull-right">
+                            <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+                                <span class="label">Running</span>
+                                <input id="switch-shadow" ng-model="setup.running" class="switch switch--shadow" type="checkbox">
+                                <label for="switch-shadow"></label>
+                            </div>
+                            <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+                                <span class="label">Trading</span>
+                                <input id="allowTrade" ng-model="setup.trading" class="switch switch--shadow" type="checkbox">
+                                <label for="allowTrade"></label>
+                            </div>
+                        </div>
+                    </div>
+                    <hr/>
+                    <button ng-disabled="loading" ng-click="updateConfig()" type="button" class="btn btn-default">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12" style="margin-top: 20px;">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Orders</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table class="table table-condensed" style="margin-bottom: 0px !important;">
+                            <thead>
+                                <tr>
+                                    <th>Coin</th>
+                                    <th>Amount</th>
+                                    <th>Ask at (BUY)</th>
+                                    <th>Ask Price</th>
+                                    <th>Bid at (SELL)</th>
+                                    <th>Bid Price</th>
+                                    <th>Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                            <tfoot>
+                                <td colspan="5">
+                                    <button type="button" class="btn btn-default">Export</button>
+                                </td>
+                                <td colspan="1" style="width: 15%;">
+                                    <strong>Daily Success Rate</strong>
+                                </td>
+                                <td colspan="1">
+                                    0%
+                                </td>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

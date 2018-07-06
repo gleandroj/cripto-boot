@@ -2,6 +2,10 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import ServiceProvider from './providers';
 import log from './services/logger';
+import session from 'express-session';
+import mongoStore from 'connect-mongo';
+
+const MongoStore = mongoStore(session);
 
 export default class Application {
 
@@ -18,6 +22,14 @@ export default class Application {
         this.express.get('/api/ping', (req, res) => res.send('pong'));
         this._serviceProvider = new ServiceProvider(this);
         await this._serviceProvider.register();
+        this.express.use(session({
+            secret: process.env.APP_SECRET,
+            resave: true,
+            saveUninitialized: false,
+            store: new MongoStore({
+              mongooseConnection: this._serviceProvider.providers.db
+            })
+          }));
         this._serviceProvider.registerRoutes();
     }
 

@@ -1,0 +1,49 @@
+<style>
+    .form-signin {
+        padding: 15px;
+        margin: 0 auto;
+    }
+    .form-signin .form-signin-heading,
+    .form-signin .checkbox {
+        margin-bottom: 10px;
+    }
+    .form-signin .form-control {
+        position: relative;
+        height: auto;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+        padding: 10px;
+        font-size: 16px;
+    }
+    .form-signin .form-control:focus {
+        z-index: 2;
+    }
+    .flex-row-center{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+</style>
+<div class="container flex-row-center">
+    <form ng-submit="login()" class="form-signin col-xs-12 col-sm-8 col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Please sign in</h3>
+            </div>
+            <div class="panel-body">
+                <div class="form-group">
+                    <label for="inputEmail" class="sr-only">Username</label>
+                    <input required ng-model="credentials.username" type="text" id="inputEmail" class="form-control" placeholder="Username" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="inputPassword" class="sr-only">Password</label>
+                    <input required ng-model="credentials.password" type="password" id="inputPassword" class="form-control" placeholder="Password" required>
+                </div>
+                <button ng-disabled="loading" class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+            </div>
+        </div>
+
+    </form>
+
+</div>

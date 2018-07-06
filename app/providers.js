@@ -3,6 +3,7 @@ import { MongoClient } from 'mongodb';
 import { format } from 'util';
 import ApiRoutes from './routes/api';
 import DatabaseService from './services/database.service';
+import AuthService from './services/auth.service';
 
 export default class ServiceProvider {
 
@@ -33,7 +34,8 @@ export default class ServiceProvider {
             binance: binance,
             clientDB: client,
             db: client.db(process.env.MONGO_DB),
-            database: new DatabaseService(client.db(process.env.MONGO_DB))
+            database: new DatabaseService(client.db(process.env.MONGO_DB)),
+            auth: new AuthService()
         };
     }
 
