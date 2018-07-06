@@ -13,12 +13,10 @@ export default (app) => {
     };
 
     const getConfig = async (req, res) => {
-        authCheck(req, res);
         res.json(await db.getConfig().toPromise());
     };
 
     const updateConfig = async (req, res) => {
-        authCheck(req, res);
         const config = req.body;
         res.json(await db.updateConfig(config).toPromise());
     };
