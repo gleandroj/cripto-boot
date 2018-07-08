@@ -4,6 +4,7 @@ import { format } from 'util';
 import ApiRoutes from './routes/api';
 import DatabaseService from './services/database.service';
 import AuthService from './services/auth.service';
+import { BinanceService } from './services/binance.service';
 
 export default class ServiceProvider {
 
@@ -31,7 +32,7 @@ export default class ServiceProvider {
         });
         let client = await this.registerDb();
         this._providers = {
-            binance: binance,
+            binance: new BinanceService(binance),
             clientDB: client,
             db: client.db(process.env.MONGO_DB),
             database: new DatabaseService(client.db(process.env.MONGO_DB)),

@@ -8,6 +8,17 @@ export default class DatabaseService {
         this.configSubject = new Subject();
     }
 
+    candles(){
+        return from(this.db.collection('candles').find({}).toArray());
+    }
+
+    storeCandle(event) {
+        return from(
+            this.db.collection('candles')
+                .insertOne(event)
+        )
+    }
+
     updateConfig(config) {
         delete config._id;
         return from(

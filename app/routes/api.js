@@ -1,6 +1,7 @@
 export default (app) => {
     const db = app.providers.database;
     const auth = app.providers.auth;
+    const binance = app.providers.binance;
 
     const authCheck = function (req, res) {
         if (!req.session.token) {
@@ -58,6 +59,9 @@ export default (app) => {
     app.express.route('/api/setup').post(updateConfig);
     app.express.route('/api/login').post(login);
     app.express.route('/api/logout').get(logout);
+    app.express.route('/api/test').get(async (req, res) => {
+        res.json(await binance.status().toPromise());
+    });
 
     // app.express.route('/api/vela').get(getVela);
     // app.express.route('/api/kline').get(getKline);
