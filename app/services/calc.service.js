@@ -1,5 +1,5 @@
 
-/*export default*/ class Calc {
+export default class Calc {
 
     constructor(dnsens) {
         this.dnsens = dnsens || 9;

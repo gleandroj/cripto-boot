@@ -26,16 +26,18 @@ export default class ServiceProvider {
     }
 
     async register() {
-        let binance = Binance({
+        const binance = Binance({
             APIKEY: process.env.BINANCE_APIKEY,
             APISECRET: process.env.BINANCE_APISECRET
         });
-        let client = await this.registerDb();
+        const client = await this.registerDb();
+        const database = new DatabaseService(client.db(process.env.MONGO_DB));
+        await database.createCollections();
         this._providers = {
             binance: new BinanceService(binance),
             clientDB: client,
             db: client.db(process.env.MONGO_DB),
-            database: new DatabaseService(client.db(process.env.MONGO_DB)),
+            database: database,
             auth: new AuthService()
         };
     }

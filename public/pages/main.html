@@ -25,26 +25,26 @@
                     <div class="row">
                         <div class="col-xs-12 col-md-3 col-lg-3">
                             <div class="form-group">
-                                <label for="dnsens">Pair</label>
+                                <label>Pair</label>
                                 <select ng-model="setup.pair" ng-options="option as option for option in pairs" class="form-control"></select>
                                 </select>
                             </div>
                         </div>
                         <div class="col-xs-12 col-md-3 col-lg-3">
                             <div class="form-group">
-                                <label for="dnsens">Simultaneous Trades</label>
-                                <input class="form-control" type="number" id="trades" ng-model="setup.simultaneous_trade" required>
+                                <label>Simultaneous Trades</label>
+                                <input class="form-control" type="number" ng-model="setup.simultaneous_trade" required>
                             </div>
                         </div>
                         <div class="col-xs-12 col-md-3 col-lg-3">
                             <div class="form-group">
-                                <label for="dnsens">Time Frame (minutes)</label>
-                                <input class="form-control" type="number" id="time_frame" ng-model="setup.time_frame" required>
+                                <label>Candle (minutes)</label>
+                                <input class="form-control" type="number" ng-model="setup.candle_interval" required>
                             </div>
                         </div>
                         <div class="col-xs-12 col-md-3 col-lg-3">
                             <div class="form-group">
-                                <label for="dnsens">RSI Sensibility</label>
+                                <label>RSI Sensibility</label>
                                 <input class="form-control" type="number" id="rsi_sensibility" ng-model="setup.rsi_sensibility" required>
                             </div>
                         </div>
@@ -52,14 +52,20 @@
                     <div class="row">
                         <div class="col-xs-12 col-md-3 col-lg-3">
                             <div class="form-group">
-                                <label for="dnsens">Balance</label>
-                                <input class="form-control" disabled type="number" id="trades" ng-model="setup.balance" required>
+                                <label>Balance</label>
+                                <input class="form-control" disabled type="number" ng-model="setup.balance" required>
                             </div>
                         </div>
                         <div class="col-xs-12 col-md-3 col-lg-3">
                             <div class="form-group">
-                                <label for="dnsens">Maximum Amount per Trade</label>
-                                <input class="form-control" type="number" id="time_frame" ng-model="setup.max_amout_per_trade" required>
+                                <label>Maximum Amount per Trade</label>
+                                <input class="form-control" type="number" ng-model="setup.max_amout_per_trade" required>
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-md-3 col-lg-3">
+                            <div class="form-group">
+                                <label>Coin choice interval (minutes)</label>
+                                <input class="form-control" type="number" ng-model="setup.coin_choice_interval" required>
                             </div>
                         </div>
 

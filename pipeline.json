@@ -1,0 +1,37 @@
+[
+    { $match: {
+            "created_at": {    
+                $gte: 153127171034
+            }
+        }
+    },
+    { $sort: {  
+            created_at: -1
+        }
+    },
+    { $group: {  
+        _id: '$symbol',  
+        last_created_at: {    
+            $last: "$created_at"
+            },  
+            candles: {    
+                $push: "$$ROOT"
+            },  
+            total: {    
+                $sum: 1
+            }
+        }
+    },
+    { $project: {
+            "candles": {   
+                $slice: [
+                    "$candles",
+                    -2
+                ]
+            }
+        }
+    },
+    { 
+        $count:'*'
+    }
+]

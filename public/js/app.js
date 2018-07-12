@@ -53,9 +53,10 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr'])
         $scope.setup = {
             pair: null,
             simultaneous_trade: null,
-            time_frame: null,
+            candle_interval: null,
             rsi_sensibility: null,
             max_amout_per_trade: null,
+            coin_choice_interval: null,
             balance: null,
             runnig: false,
             trading: false

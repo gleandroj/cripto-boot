@@ -26,6 +26,7 @@ export class BinanceService {
                         close: parseFloat(candle.close),
                         high: parseFloat(candle.high),
                         low: parseFloat(candle.low),
+                        haClose: (parseFloat(candle.open) + parseFloat(candle.close) + parseFloat(candle.high) + parseFloat(candle.low)) / 4,
                         volume: parseFloat(candle.volume),
                         openTime: candle.startTime,
                         closeTime: candle.closeTime,
@@ -34,26 +35,5 @@ export class BinanceService {
                 }
             });
         });
-    }
-
-    status() {
-        return from(
-            this.binance.dailyStats()
-        ).pipe(map((response) => {
-            const created_at = moment().utc().valueOf();
-            return response.map((resp) => {
-                return {
-                    symbol: resp.symbol,
-                    open: parseFloat(resp.openPrice),
-                    close: parseFloat(resp.lastPrice),
-                    high: parseFloat(resp.highPrice),
-                    low: parseFloat(resp.lowPrice),
-                    volume: parseFloat(resp.volume),
-                    openTime: resp.openTime,
-                    closeTime: resp.closeTime,
-                    created_at: created_at
-                };
-            });
-        }));
     }
 }
