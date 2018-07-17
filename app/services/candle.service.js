@@ -4,10 +4,11 @@ import { from, EMPTY } from "rxjs";
 import moment from 'moment';
 import Calc from "./calc.service";
 
-const STATUS_OPENED = 0;
-const STATUS_CLOSED = 1;
+export const STATUS_OPENED = 0;
+export const STATUS_CLOSED = 1;
 
 export class CandleService {
+
     constructor(database, config, binance) {
         this.database = database;
         this.config = config;
@@ -70,14 +71,18 @@ export class CandleService {
     }
 
     async analyzeCandle(event) {
+        const openedTrades = await this.database.openedTrades().toPromise();
         const symbol = event.current.symbol;
         const curr = event.current;
         const last = event.last;
-        if (curr.flag == 1 && (!last || last.flag != 1)) {
+        const maxTrades = this.config.simultaneous_trade;
+        const amount = this.config.max_amout_per_trade || 0;
+
+        if (curr.flag == 1 && (!last || last.flag != 1) && (maxTrades && openedTrades < maxTrades )) {
             const trade = {
                 symbol: symbol,
                 status: STATUS_OPENED,
-                amount: 1,
+                amount: amount,
                 ask_at: moment().valueOf(),
                 ask_price: curr.close,
                 bid_at: null,
@@ -85,7 +90,7 @@ export class CandleService {
                 profit: null
             };
             this.database.storeTrade(trade).subscribe(() => { });
-            log(`Buy ${symbol}, ${curr.haFec}`);
+            //log(`Buy ${symbol}, ${curr.haFec}`);
         }
         else if ((!last || last.flag == 1) && curr.flag != 1) {
             let lastBuy = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
@@ -96,7 +101,7 @@ export class CandleService {
             this.database.updateTrade(lastBuy);
             //Listar das trade (50 por página) Paginação
             //21:30 (meeting) calcular os TOP COIN.
-            log(`Sell ${symbol}, ${curr.haFec}`);
+            //log(`Sell ${symbol}, ${curr.haFec}`);
         }
     }
 

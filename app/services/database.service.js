@@ -1,5 +1,7 @@
 import { Subject, from, of } from 'rxjs';
 import { tap, map, switchMap } from 'rxjs/operators';
+import { STATUS_OPENED } from './candle.service';
+
 
 export default class DatabaseService {
 
@@ -88,6 +90,15 @@ export default class DatabaseService {
                 .insertOne(trade)
         ).pipe(
             switchMap(c => of(trade))
+        );
+    }
+
+    openedTrades(){
+        return from(
+            this.db.collection('trades')
+                .find({
+                    status: STATUS_OPENED
+                }).count()
         );
     }
 
