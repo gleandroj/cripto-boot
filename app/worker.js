@@ -10,13 +10,13 @@ export default class BackgroundWorker {
 
     storeSymbolStatus() {
         log('Wating for price change.');
-        this.binance.live().subscribe((candle) => {
-            this.database.storeCandle(candle).subscribe(() => { });
+        this.binance.live().subscribe(async (candle) => {
+            await this.database.storeCandle(candle).toPromise();
         });
     }
 
     destroy() {
-        if (this.checkCandleInterval) this.this.checkCandleInterval.unsubiscribe();
+        if (this.checkCandleInterval) this.checkCandleInterval.unsubscribe();
         if (this.candleService) delete this.candleService;
     }
 
@@ -24,27 +24,27 @@ export default class BackgroundWorker {
         this.candleService.checkCandle().then(() => { });
     }
 
-    async initialize() {
+    async initialize(config) {
         this.destroy();
-        this.config = await this.database.getConfig().toPromise();
+        this.config = config ? config : await this.database.getConfig().toPromise();
         if (this.config && this.config.running) {
             log('Boot running.');
             log(`Candle interval: ${this.config.candle_interval} min.`);
             this.candleService = new CandleService(this.database, this.config, this.binance);
-            this.checkCandleInterval = interval(this.config.candle_interval * (1000 * 60))
-                .subscribe(() => this.checkCandle())
+            // this.checkCandleInterval = interval(this.config.candle_interval * (1000 * 60))
+            //     .subscribe(() => this.checkCandle());
+            this.checkCandle();
         }
     }
 
     run() {
         this.database = this.app.providers.database;
         this.binance = this.app.providers.binance;
-        this.initialize().then(() => { });
         this.storeSymbolStatus();
         this.database.configSubject.subscribe((config) => {
-            this.config = config;
-            this.initialize().then(() => { });
+            this.initialize(config).then(() => { });
             log('Config updated.');
         });
+        this.initialize().then(() => { });
     }
 }

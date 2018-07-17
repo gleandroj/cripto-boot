@@ -1,28 +1,65 @@
 import log from "./logger";
+import { switchMap, map, concatMap } from "rxjs/operators";
+import { from, of } from "rxjs";
+import moment from 'moment';
+import Calc from "./calc.service";
 
 export class CandleService {
-    constructor(database, config, binance){
+    constructor(database, config, binance) {
         this.database = database;
         this.config = config;
         this.binance = binance;
     }
 
-    async checkCandle(){
-        const totalDocuments = await this.database.db.collection('candles').count();
-        const result = await this.database.lastPrices().toPromise();
-        log(`Total documents: ${totalDocuments}`);
+    makeComputedCanldes() {
+        return this.binance.symbols().pipe(
+            switchMap(symbols =>
+                from(symbols).pipe(
+                    concatMap(symbol =>
+                        this.database.lastPriceForSymbol(symbol).pipe(
+                            switchMap(
+                                lastClose => this.database.lastComputedCandle(symbol).pipe(
+                                    switchMap(lastComputed => {
+                                        if (!lastClose) {
+                                            log(`Skipping candle for: ${symbol}. No prices found.`);
+                                            return;
+                                        }
+                                        const haAbe = lastComputed ? ((lastComputed.haAbe + lastClose.haClose) / 2) : ((lastClose.open + lastClose.haClose) / 2);
+                                        const haFec = lastClose.haClose;
+                                        const haMax = Math.max(lastClose.high, haAbe, haFec);
+                                        const haMin = Math.min(lastClose.low, haAbe, haFec);
+                                        const result = this.calc.rsi(
+                                            haFec,
+                                            lastComputed.haFec,
+                                            haMin,
+                                            lastComputed.haMin,
+                                            lastComputed.up,
+                                            lastComputed.down
+                                        );
+                                        return this.database.storeComputedCandle({
+                                            symbol: symbol,
+                                            haAbe: haAbe,
+                                            haFec: lastClose.haClose,
+                                            haMax: haMax,
+                                            haMin: haMin,
+                                            created_at: moment().valueOf(),
+                                            flag: result.flag,
+                                            up: result.up,
+                                            down: result.down,
+                                            rsi: result.rsi
+                                        });
+                                    })
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        );
+    }
 
-        result.forEach(group => {
-            log(`Analising group: ${group._id} with ${group.candles.length} prices.`);
-        });
-
-        //console.log(result);
-
-        // if (result.length <= 0 || result.length < 2) {
-        //     console.log('Nothing to analise, skipping process.');
-        //     return;
-        // };
-
+    async analyzeCandle(candle) {
+        console.log(candle);
         // let kline = result[1];
         // let lastVela = await db.collection('vela').find({}).sort({ created_at: -1 }).limit(1).toArray();
         // lastVela = lastVela.length > 0 ? lastVela[0] : {
@@ -50,5 +87,23 @@ export class CandleService {
         // vela.created_at = moment().valueOf();
         // await db.collection('vela').insert(vela);
         // this.logVela(vela);
+    }
+
+    async checkCandle() {
+        const pair = this.config.pair;
+        this.calc = new Calc(this.config.rsi_sensibility);
+        this.makeComputedCanldes().subscribe((candle) => {
+            if (!this.config.pair) {
+                log("No pair selected, skipping step.");
+                return;
+            }
+            const len = candle.symbol.length - pair.length;
+            const isSelectedPair = candle.symbol.indexOf(pair) >= len;
+
+            if (isSelectedPair) this.analyzeCandle(candle);
+        });
+
+
+
     }
 }

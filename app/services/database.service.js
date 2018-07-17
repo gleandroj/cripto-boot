@@ -1,5 +1,5 @@
-import { Subject, from } from 'rxjs';
-import { tap, map } from 'rxjs/operators';
+import { Subject, from, of } from 'rxjs';
+import { tap, map, switchMap } from 'rxjs/operators';
 
 export default class DatabaseService {
 
@@ -8,10 +8,15 @@ export default class DatabaseService {
         this.configSubject = new Subject();
     }
 
-    async createCollections(){
+    async createCollections() {
         const collections = await this.db.listCollections().toArray();
-        if(collections.findIndex((r) => r.name == 'candles') < 0){
+        if (collections.findIndex((r) => r.name == 'candles') < 0) {
             this.db.createCollection('candles', {
+                capped: true,
+                max: 10000,
+                size: 10000000
+            });
+            this.db.createCollection('computed_candles', {
                 capped: true,
                 max: 10000,
                 size: 10000000
@@ -27,6 +32,15 @@ export default class DatabaseService {
         return from(
             this.db.collection('candles')
                 .insertOne(event)
+        );
+    }
+
+    storeComputedCandle(candle) {
+        return from(
+            this.db.collection('computed_candles')
+                .insertOne(candle)
+        ).pipe(
+            switchMap(c => of(candle))
         );
     }
 
@@ -46,6 +60,32 @@ export default class DatabaseService {
     getConfig() {
         return from(
             this.db.collection('config').findOne({ key: 'general' }, { _id: 0 })
+        );
+    }
+
+    lastPriceForSymbol(symbol) {
+        return from(
+            this.db.collection('candles')
+                .findOne({
+                    $query: {
+                        symbol: symbol
+                    }, $orderby: {
+                        id: -1
+                    }
+                })
+        );
+    }
+
+    lastComputedCandle(symbol) {
+        return from(
+            this.db.collection('computed_candles')
+                .findOne({
+                    $query: {
+                        symbol: symbol
+                    }, $orderby: {
+                        id: -1
+                    }
+                })
         );
     }
 
@@ -76,7 +116,7 @@ export default class DatabaseService {
                         }
                     }
                 }
-            ],{
+            ], {
                 allowDiskUse: true
             }
         ).toArray());
