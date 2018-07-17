@@ -14,7 +14,7 @@
     </div>
 </nav>
 
-<div class="container" ng-controller="TradeController">
+<div class="container">
     <div class="row">
         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12" style="margin-top: 20px;">
             <div class="panel panel-default">
@@ -109,7 +109,29 @@
                                 </tr>
                             </thead>
                             <tbody>
-
+                                <tr ng-repeat="trade in trades">
+                                    <td>
+                                        {{ trade.symbol }}
+                                    </td>
+                                    <td>
+                                        {{ trade.amount }}
+                                    </td>
+                                    <td>
+                                        {{ trade.ask_at | date:'yyyy-MM-dd HH:mm:ss'}}
+                                    </td>
+                                    <td>
+                                        {{ trade.ask_price }}
+                                    </td>
+                                    <td>
+                                        {{  trade.bid_at ? (trade.bid_at | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
+                                    </td>
+                                    <td>
+                                        {{ trade.bid_price || '-' }}
+                                    </td>
+                                    <td>
+                                        {{ trade.profit || '-' }}
+                                    </td>
+                                </tr>
                             </tbody>
                             <tfoot>
                                 <td colspan="5">
@@ -124,7 +146,7 @@
                             </tfoot>
                         </table>
                     </div>
-                    <ul style="margin-bottom: 0;" class="pull-right" uib-pagination direction-links="true" boundary-links="true" boundary-link-numbers="true" force-ellipses="true" total-items="1000" max-size="5" ng-change="pageChanged(currentPage)" ng-model="currentPage"></ul>
+                    <ul style="margin-bottom: 0;" class="pull-right" uib-pagination direction-links="true" boundary-links="true" boundary-link-numbers="true" force-ellipses="true" total-items="totalTrades" max-size="5" items-per-page="50" ng-change="pageChanged(currentPage)" ng-model="currentPage"></ul>
                 </div>
             </div>
         </div>

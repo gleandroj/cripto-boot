@@ -50,7 +50,9 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
             'USDT'
         ];
         $scope.loading = false;
-        $scope.currentPage = 0;
+        $scope.currentPage = 1;
+        $scope.trades = [];
+        $scope.totalTrades = 0;
         $scope.setup = {
             pair: null,
             simultaneous_trade: null,
@@ -59,12 +61,12 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
             max_amout_per_trade: null,
             coin_choice_interval: null,
             balance: null,
-            runnig: false,
+            running: false,
             trading: false
         };
 
         $scope.pageChanged = function ($event) {
-            console.log($event);
+            $scope.getTrades();
         };
 
         $scope.updateConfig = function () {
@@ -74,6 +76,17 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
                 $scope.loading = false;
             }, () => {
                 $scope.loading = false;
+            });
+        };
+
+        $scope.getTrades = function(){
+            const page = $scope.currentPage;
+            $http.get(`/api/trades?page=${page}`).then((response) => {
+                if (response.data) {
+                    const data = response.data;
+                    $scope.totalTrades = data.total;
+                    $scope.trades = data.data;
+                }
             });
         };
 
@@ -100,4 +113,10 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
         };
 
         $scope.getServerData();
+        $scope.getTrades();
+
+        $interval(() => {
+            $scope.getTrades();
+        }, 1000 * 10);
+
     }]);

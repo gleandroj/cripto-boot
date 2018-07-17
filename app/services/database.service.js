@@ -93,7 +93,22 @@ export default class DatabaseService {
         );
     }
 
-    openedTrades(){
+    countTrades(){
+        return from(
+            this.db.collection('trades').find({}).count()
+        )
+    }
+
+    paginateTrades(page_size, page) {
+        return from(
+            this.db.collection('trades').find({})
+                .skip(page_size * (page - 1))
+                .limit(page_size)
+                .toArray()
+        )
+    }
+
+    openedTrades() {
         return from(
             this.db.collection('trades')
                 .find({
