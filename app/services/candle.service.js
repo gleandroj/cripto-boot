@@ -30,13 +30,13 @@ export class CandleService {
                                         const haMin = Math.min(lastClose.low, haAbe, haFec);
                                         const result = this.calc.rsi(
                                             haFec,
-                                            lastComputed.haFec,
+                                            lastComputed ? lastComputed.haFec : null,
                                             haMin,
-                                            lastComputed.haMin,
-                                            lastComputed.up,
-                                            lastComputed.down
+                                            lastComputed ? lastComputed.haMin : null,
+                                            lastComputed ? lastComputed.up : null,
+                                            lastComputed ? lastComputed.down : null
                                         );
-                                        return this.database.storeComputedCandle({
+                                        const candle = {
                                             symbol: symbol,
                                             haAbe: haAbe,
                                             haFec: lastClose.haClose,
@@ -47,6 +47,10 @@ export class CandleService {
                                             up: result.up,
                                             down: result.down,
                                             rsi: result.rsi
+                                        };
+                                        return of({
+                                            current: candle,
+                                            last: lastComputed
                                         });
                                     })
                                 )
@@ -58,32 +62,25 @@ export class CandleService {
         );
     }
 
-    async analyzeCandle(candle) {
-        console.log(candle);
-        // let kline = result[1];
-        // let lastVela = await db.collection('vela').find({}).sort({ created_at: -1 }).limit(1).toArray();
-        // lastVela = lastVela.length > 0 ? lastVela[0] : {
-        //     price: result[0].price
-        // };
-        // let vela = calc.makeVela(kline.price, lastVela);
-        // vela.price = kline.price;
-        // vela.realPrice = kline.realPrice;
-        // vela.symbol = config.symbol;
-        // vela.action = null;
-        // vela.realProfit = null;
-        // vela.profit = null;
-
-        // if (vela.flag == 1 && lastVela && lastVela.flag != 1)
-        //     vela.action = 'BUY';
-        // else if (lastVela && lastVela.flag == 1 && vela.flag != 1) {
-        //     let lastBuy = (await db.collection('vela').find({
-        //         action: 'BUY'
-        //     }).sort({ created_at: -1 }).limit(1).toArray())[0];
-        //     vela.action = 'SELL';
-        //     vela.realProfit = ((vela.realPrice - lastBuy.realPrice) / vela.realPrice) * 100;
-        //     vela.profit = ((vela.price - lastBuy.price) / vela.price) * 100;
-        // }
-
+    async analyzeCandle(event) {
+        //console.log(event);
+        const curr = event.current;
+        const last = event.last;
+        if (curr.flag == 1 && last && last.flag != 1){
+            curr.action = 'BUY';
+            log(`Buy ${curr.symbol}, ${curr.haFec}`);
+        }
+        else if (last && last.flag == 1 && curr.flag != 1) {
+            // let lastBuy = (await db.collection('vela').find({
+            //     action: 'BUY'
+            // }).sort({ created_at: -1 }).limit(1).toArray())[0];
+            // vela.action = 'SELL';
+            // vela.realProfit = ((vela.realPrice - lastBuy.realPrice) / vela.realPrice) * 100;
+            // vela.profit = ((vela.price - lastBuy.price) / vela.price) * 100;
+            curr.action = 'SELL';
+            log(`Sell ${curr.symbol}, ${curr.haFec}`);
+        }
+        this.database.storeComputedCandle(curr).subscribe(() => {});
         // vela.created_at = moment().valueOf();
         // await db.collection('vela').insert(vela);
         // this.logVela(vela);
@@ -92,15 +89,14 @@ export class CandleService {
     async checkCandle() {
         const pair = this.config.pair;
         this.calc = new Calc(this.config.rsi_sensibility);
-        this.makeComputedCanldes().subscribe((candle) => {
+        this.makeComputedCanldes().subscribe((event) => {
             if (!this.config.pair) {
                 log("No pair selected, skipping step.");
                 return;
             }
-            const len = candle.symbol.length - pair.length;
-            const isSelectedPair = candle.symbol.indexOf(pair) >= len;
-
-            if (isSelectedPair) this.analyzeCandle(candle);
+            const len = event.current.symbol.length - pair.length;
+            const isSelectedPair = event.current.symbol.indexOf(pair) >= len;
+            if (isSelectedPair) this.analyzeCandle(event);
         });
 
 

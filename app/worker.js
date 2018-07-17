@@ -31,9 +31,8 @@ export default class BackgroundWorker {
             log('Boot running.');
             log(`Candle interval: ${this.config.candle_interval} min.`);
             this.candleService = new CandleService(this.database, this.config, this.binance);
-            // this.checkCandleInterval = interval(this.config.candle_interval * (1000 * 60))
-            //     .subscribe(() => this.checkCandle());
-            this.checkCandle();
+            this.checkCandleInterval = interval(this.config.candle_interval * (1000 * 60))
+                .subscribe(() => this.checkCandle());
         }
     }
 
