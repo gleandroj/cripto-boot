@@ -1,8 +1,11 @@
 import log from "./logger";
 import { switchMap, map, concatMap } from "rxjs/operators";
-import { from, of } from "rxjs";
+import { from, EMPTY } from "rxjs";
 import moment from 'moment';
 import Calc from "./calc.service";
+
+const STATUS_OPENED = 0;
+const STATUS_CLOSED = 1;
 
 export class CandleService {
     constructor(database, config, binance) {
@@ -16,13 +19,13 @@ export class CandleService {
             switchMap(symbols =>
                 from(symbols).pipe(
                     concatMap(symbol =>
-                        this.database.lastPriceForSymbol(symbol).pipe(
+                        this.database.lastPrice(symbol).pipe(
                             switchMap(
                                 lastClose => this.database.lastComputedCandle(symbol).pipe(
                                     switchMap(lastComputed => {
                                         if (!lastClose) {
-                                            log(`Skipping candle for: ${symbol}. No prices found.`);
-                                            return;
+                                            //log(`Skipping candle for: ${symbol}. No prices found.`);
+                                            return EMPTY;
                                         }
                                         const haAbe = lastComputed ? ((lastComputed.haAbe + lastClose.haClose) / 2) : ((lastClose.open + lastClose.haClose) / 2);
                                         const haFec = lastClose.haClose;
@@ -42,16 +45,20 @@ export class CandleService {
                                             haFec: lastClose.haClose,
                                             haMax: haMax,
                                             haMin: haMin,
+                                            close: lastClose.close,
                                             created_at: moment().valueOf(),
                                             flag: result.flag,
                                             up: result.up,
                                             down: result.down,
                                             rsi: result.rsi
                                         };
-                                        return of({
-                                            current: candle,
-                                            last: lastComputed
-                                        });
+                                        return this.database.storeComputedCandle(candle)
+                                            .pipe(map((r) => {
+                                                return {
+                                                    current: candle,
+                                                    last: lastComputed
+                                                };
+                                            }));
                                     })
                                 )
                             )
@@ -63,27 +70,34 @@ export class CandleService {
     }
 
     async analyzeCandle(event) {
-        //console.log(event);
+        const symbol = event.current.symbol;
         const curr = event.current;
         const last = event.last;
-        if (curr.flag == 1 && last && last.flag != 1){
-            curr.action = 'BUY';
-            log(`Buy ${curr.symbol}, ${curr.haFec}`);
+        if (curr.flag == 1 && (!last || last.flag != 1)) {
+            const trade = {
+                symbol: symbol,
+                status: STATUS_OPENED,
+                amount: 1,
+                ask_at: moment().valueOf(),
+                ask_price: curr.close,
+                bid_at: null,
+                bid_price: null,
+                profit: null
+            };
+            this.database.storeTrade(trade).subscribe(() => { });
+            log(`Buy ${symbol}, ${curr.haFec}`);
         }
-        else if (last && last.flag == 1 && curr.flag != 1) {
-            // let lastBuy = (await db.collection('vela').find({
-            //     action: 'BUY'
-            // }).sort({ created_at: -1 }).limit(1).toArray())[0];
-            // vela.action = 'SELL';
-            // vela.realProfit = ((vela.realPrice - lastBuy.realPrice) / vela.realPrice) * 100;
-            // vela.profit = ((vela.price - lastBuy.price) / vela.price) * 100;
-            curr.action = 'SELL';
-            log(`Sell ${curr.symbol}, ${curr.haFec}`);
+        else if ((!last || last.flag == 1) && curr.flag != 1) {
+            let lastBuy = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
+            lastBuy.status = STATUS_CLOSED;
+            lastBuy.bid_at = moment().valueOf();
+            lastBuy.bid_price = curr.close;
+            lastBuy.profit = (curr.close / lastBuy.ask_price) * (100 - 0.1);
+            this.database.updateTrade(lastBuy);
+            //Listar das trade (50 por página) Paginação
+            //21:30 (meeting) calcular os TOP COIN.
+            log(`Sell ${symbol}, ${curr.haFec}`);
         }
-        this.database.storeComputedCandle(curr).subscribe(() => {});
-        // vela.created_at = moment().valueOf();
-        // await db.collection('vela').insert(vela);
-        // this.logVela(vela);
     }
 
     async checkCandle() {
@@ -98,8 +112,5 @@ export class CandleService {
             const isSelectedPair = event.current.symbol.indexOf(pair) >= len;
             if (isSelectedPair) this.analyzeCandle(event);
         });
-
-
-
     }
 }

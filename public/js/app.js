@@ -1,4 +1,4 @@
-angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr'])
+angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
     .config(function ($urlRouterProvider, $stateProvider) {
         $stateProvider.state({
             name: 'login',
@@ -50,6 +50,7 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr'])
             'USDT'
         ];
         $scope.loading = false;
+        $scope.currentPage = 0;
         $scope.setup = {
             pair: null,
             simultaneous_trade: null,
@@ -60,6 +61,10 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr'])
             balance: null,
             runnig: false,
             trading: false
+        };
+
+        $scope.pageChanged = function ($event) {
+            console.log($event);
         };
 
         $scope.updateConfig = function () {

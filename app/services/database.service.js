@@ -63,16 +63,41 @@ export default class DatabaseService {
         );
     }
 
-    lastPriceForSymbol(symbol) {
+    lastTrade(symbol, status) {
+        return from(
+            this.db.collection('trades')
+                .findOne(
+                    { symbol: symbol, status: status },
+                    { sort: { _id: -1 } }
+                )
+        );
+    }
+
+    updateTrade(trade) {
+        return from(
+            this.db.collection('trades')
+                .updateOne({
+                    _id: trade._id
+                }, trade)
+        );
+    }
+
+    storeTrade(trade) {
+        return from(
+            this.db.collection('trades')
+                .insertOne(trade)
+        ).pipe(
+            switchMap(c => of(trade))
+        );
+    }
+
+    lastPrice(symbol) {
         return from(
             this.db.collection('candles')
-                .findOne({
-                    $query: {
-                        symbol: symbol
-                    }, $orderby: {
-                        id: -1
-                    }
-                })
+                .findOne(
+                    { symbol: symbol },
+                    { sort: { _id: -1 } }
+                )
         );
     }
 

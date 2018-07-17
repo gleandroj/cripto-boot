@@ -21,7 +21,7 @@ export class BinanceService {
         );
     }
 
-    logLive(){
+    logLive() {
         setTimeout(() => {
             log(`Inserted more ${this.count} candles.`);
             this.count = 0;
@@ -33,9 +33,9 @@ export class BinanceService {
         const symbols = await this.symbols().toPromise();
         log(`Awaiting for price changes of ${symbols.length} symbols.`);
         this.logLive();
-        return this.binance.ws.candles(symbols, '1m', async candle => {
+        return this.binance.ws.candles('eosbtc', '1m', async candle => {
             this.candleSubject.next({
-                symbol: candle.symbol,
+                symbol: candle.symbol.trim(),
                 open: parseFloat(candle.open),
                 close: parseFloat(candle.close),
                 high: parseFloat(candle.high),
@@ -51,9 +51,7 @@ export class BinanceService {
     }
 
     live() {
-        this.wsLive().then(() => {
-
-        });
+        this.wsLive().then(() => { });
         return this.candleSubject;
     }
 }
