@@ -14,7 +14,7 @@ export class BinanceService {
     balances(asset){
         return from(
             this.binance.accountInfo()
-        ).pipe(map(resp => resp.balances.filter(b => b.asset = asset)[0]));
+        ).pipe(map(resp => resp.balances.filter(b => b.asset == asset)[0]));
     }
 
     symbols() {
