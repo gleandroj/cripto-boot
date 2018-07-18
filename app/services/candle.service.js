@@ -96,7 +96,7 @@ export class CandleService {
         const isSelectedPair = curr.symbol.indexOf(pair) >= len;
         const lastBuy = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
         const isOnRanking = this.ranking.indexOf((t) => t._id === symbol) >= 0;
-        console.log(isOnRanking);
+        
         if (isOnRanking && 
             isSelectedPair &&
             curr.flag == 1 &&
