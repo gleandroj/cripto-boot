@@ -11,6 +11,12 @@ export class BinanceService {
         this.count = 0;
     }
 
+    balances(asset){
+        return from(
+            this.binance.accountInfo()
+        ).pipe(map(resp => resp.balances.filter(b => b.asset = asset)[0]));
+    }
+
     symbols() {
         if (this._symbols) from(this._symbols);
         return from(from(

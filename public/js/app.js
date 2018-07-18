@@ -17,6 +17,7 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
         if (localStorage.getItem('auth-token')) {
             $state.go('main');
         }
+        $scope.balance = null;
         $scope.loading = false;
         $scope.credentials = {
             username: '',
@@ -60,7 +61,6 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
             rsi_sensibility: null,
             max_amout_per_trade: null,
             coin_choice_interval: null,
-            balance: null,
             running: false,
             trading: false
         };
@@ -73,6 +73,7 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
             $scope.loading = true;
             $http.post('/api/setup', $scope.setup).then(() => {
                 toastr.success('Configurações alteradas com sucesso.', 'Sucesso!');
+                $scope.getTrades();
                 $scope.loading = false;
             }, () => {
                 $scope.loading = false;
@@ -87,6 +88,7 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
                     $scope.totalTrades = data.total;
                     $scope.trades = data.data;
                     $scope.dailySuccessRate = Math.round(data.dailySuccessRate);
+                    $scope.balance = data.balance ? parseFloat(data.balance.free) : 0;
                 }
             });
         };
