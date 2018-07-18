@@ -63,7 +63,7 @@ export default (app) => {
             res.json({
                 total: (await db.countTrades().toPromise()),
                 data: (await db.paginateTrades(page_size, page).toPromise()),
-                balance: (await binance.balances(config.pair).toPromise()),
+                balance: config ? (await binance.balances(config.pair).toPromise()) : null,
                 dailySuccessRate: rate ? rate.rate : 0
             });
         }

@@ -14,7 +14,6 @@ export class CandleService {
         this.config = config;
         this.binance = binance;
         this.ranking = [];
-        
     }
 
     logRanking(){
