@@ -71,6 +71,7 @@ export class CandleService {
     }
 
     async analyzeCandle(event) {
+        const pair = this.config.pair;
         const openedTrades = await this.database.openedTrades().toPromise();
         const symbol = event.current.symbol;
         const curr = event.current;
@@ -78,7 +79,10 @@ export class CandleService {
         const maxTrades = this.config.simultaneous_trade;
         const amount = this.config.max_amout_per_trade || 0;
 
-        if (curr.flag == 1 && (last && last.flag != 1) && (maxTrades && openedTrades < maxTrades)) {
+        const len = curr.symbol.length - pair.length;
+        const isSelectedPair = curr.symbol.indexOf(pair) >= len;
+
+        if (isSelectedPair && curr.flag == 1 && (last && last.flag != 1) && (maxTrades && openedTrades < maxTrades)) {
             const trade = {
                 symbol: symbol,
                 status: STATUS_OPENED,
@@ -106,16 +110,13 @@ export class CandleService {
     }
 
     async checkCandle() {
-        const pair = this.config.pair;
         this.calc = new Calc(this.config.rsi_sensibility);
         this.makeComputedCandles().subscribe((event) => {
             if (!this.config.pair) {
                 log("No pair selected, skipping step.");
                 return;
             }
-            const len = event.current.symbol.length - pair.length;
-            const isSelectedPair = event.current.symbol.indexOf(pair) >= len;
-            if (isSelectedPair) this.analyzeCandle(event);
+            this.analyzeCandle(event);
         });
     }
 }
