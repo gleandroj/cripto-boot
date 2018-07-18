@@ -2,7 +2,6 @@ import { Subject, from, of } from 'rxjs';
 import { tap, map, switchMap } from 'rxjs/operators';
 import { STATUS_OPENED } from './candle.service';
 
-
 export default class DatabaseService {
 
     constructor(db) {
@@ -80,7 +79,7 @@ export default class DatabaseService {
             this.db.collection('trades')
                 .updateOne({
                     _id: trade._id
-                }, trade)
+                }, { $set: trade })
         );
     }
 
@@ -93,9 +92,45 @@ export default class DatabaseService {
         );
     }
 
-    countTrades(){
+    countTrades() {
         return from(
             this.db.collection('trades').find({}).count()
+        )
+    }
+
+    dailyProfit() {
+        return from(
+            this.db.collection('trades').find({}).count()
+        )
+    }
+
+    dailySuccessRate() {
+        return from(
+            this.db.collection('trades').aggregate(
+                [
+                    {
+                        $group: {
+                            _id: null, 
+                            total_trades: { $sum: 1 },
+                            total_success_trades: {
+                                $sum: { 
+                                    $cond: { if: { $gt: ["$profit", 0] }, then: 1, else: 0 } 
+                                }
+                            }
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            rate: {
+                                $multiply: [{ $divide: ["$total_success_trades", "$total_trades"] }, 100]
+                            }
+                        }
+                    }
+                ], {
+                    allowDiskUse: true
+                }
+            ).toArray()
         )
     }
 
@@ -130,46 +165,10 @@ export default class DatabaseService {
     lastComputedCandle(symbol) {
         return from(
             this.db.collection('computed_candles')
-                .findOne({
-                    $query: {
-                        symbol: symbol
-                    }, $orderby: {
-                        id: -1
-                    }
-                })
+                .findOne(
+                    { symbol: symbol },
+                    { sort: { _id: -1 } }
+                )
         );
-    }
-
-    lastPrices() {
-        return from(this.db.collection('candles').aggregate(
-            [
-                {
-                    $group: {
-                        _id: '$symbol',
-                        last_created_at: {
-                            $last: "$created_at"
-                        },
-                        candles: {
-                            $push: "$$ROOT"
-                        },
-                        total: {
-                            $sum: 1
-                        }
-                    }
-                },
-                {
-                    $project: {
-                        "candles": {
-                            $slice: [
-                                "$candles",
-                                -2
-                            ]
-                        }
-                    }
-                }
-            ], {
-                allowDiskUse: true
-            }
-        ).toArray());
     }
 }

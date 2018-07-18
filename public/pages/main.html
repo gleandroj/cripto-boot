@@ -126,10 +126,10 @@
                                         {{  trade.bid_at ? (trade.bid_at | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
                                     </td>
                                     <td>
-                                        {{ trade.bid_price || '-' }}
+                                        {{ trade.bid_price }}
                                     </td>
                                     <td>
-                                        {{ trade.profit || '-' }}
+                                        {{ trade.profit }}
                                     </td>
                                 </tr>
                             </tbody>
@@ -141,7 +141,7 @@
                                     <strong>Daily Success Rate</strong>
                                 </td>
                                 <td colspan="1">
-                                    0%
+                                    {{ dailySuccessRate || '0' }}%
                                 </td>
                             </tfoot>
                         </table>

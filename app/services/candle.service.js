@@ -15,7 +15,7 @@ export class CandleService {
         this.binance = binance;
     }
 
-    makeComputedCanldes() {
+    makeComputedCandles() {
         return this.binance.symbols().pipe(
             switchMap(symbols =>
                 from(symbols).pipe(
@@ -90,25 +90,25 @@ export class CandleService {
                 profit: null
             };
             this.database.storeTrade(trade).subscribe(() => { });
-            //log(`Buy ${symbol}, ${curr.haFec}`);
+            log(`Buy ${symbol}, ${curr.close}`);
         }
         else if ((last && last.flag == 1) && curr.flag != 1) {
             let lastBuy = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
-            lastBuy.status = STATUS_CLOSED;
-            lastBuy.bid_at = moment().valueOf();
-            lastBuy.bid_price = curr.close;
-            lastBuy.profit = (curr.close / lastBuy.ask_price) * (100 - 0.1);
-            this.database.updateTrade(lastBuy);
-            //Listar das trade (50 por página) Paginação
-            //21:30 (meeting) calcular os TOP COIN.
-            //log(`Sell ${symbol}, ${curr.haFec}`);
+            if(lastBuy){
+                lastBuy.status = STATUS_CLOSED;
+                lastBuy.bid_at = moment().valueOf();
+                lastBuy.bid_price = curr.close;
+                lastBuy.profit = ((lastBuy.bid_price - lastBuy.ask_price) / lastBuy.bid_price) * (100 - 0.1);
+                this.database.updateTrade(lastBuy);
+            }
+            log(`Sell ${symbol}, ${curr.close}`);
         }
     }
 
     async checkCandle() {
         const pair = this.config.pair;
         this.calc = new Calc(this.config.rsi_sensibility);
-        this.makeComputedCanldes().subscribe((event) => {
+        this.makeComputedCandles().subscribe((event) => {
             if (!this.config.pair) {
                 log("No pair selected, skipping step.");
                 return;

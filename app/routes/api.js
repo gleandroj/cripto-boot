@@ -60,7 +60,8 @@ export default (app) => {
             const page = req.body.page || 1;
             res.json({
                 total: (await db.countTrades().toPromise()),
-                data: (await db.paginateTrades(page_size, page).toPromise())
+                data: (await db.paginateTrades(page_size, page).toPromise()),
+                dailySuccessRate: (await db.dailySuccessRate().toPromise())[0].rate
             });
         }
     };

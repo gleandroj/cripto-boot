@@ -86,6 +86,7 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
                     const data = response.data;
                     $scope.totalTrades = data.total;
                     $scope.trades = data.data;
+                    $scope.dailySuccessRate = Math.round(data.dailySuccessRate);
                 }
             });
         };
