@@ -79,7 +79,7 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
             });
         };
 
-        $scope.getTrades = function(){
+        $scope.getTrades = function () {
             const page = $scope.currentPage;
             $http.get(`/api/trades?page=${page}`).then((response) => {
                 if (response.data) {
@@ -95,6 +95,11 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
             $http.get('/api/setup').then((config) => {
                 if (config.data) {
                     $scope.setup = config.data;
+                }
+            }, (response) => {
+                if (response.status == 401) {
+                    localStorage.removeItem('auth-token');
+                    $state.go('login');
                 }
             });
         };
