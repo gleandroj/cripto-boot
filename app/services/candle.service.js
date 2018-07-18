@@ -13,6 +13,15 @@ export class CandleService {
         this.database = database;
         this.config = config;
         this.binance = binance;
+        this.ranking = [];
+        
+    }
+
+    async updateRanking(){
+        const interval = this.config.coin_choice_interval ? this.config.coin_choice_interval : 0;
+        this.ranking = await this.database.appreciation(interval, 5).toPromise();
+        const newRanking = this.ranking.map((t) => t._id);
+        log(`Ranking updated: ${newRanking.join(',')}`);
     }
 
     makeComputedCandles() {
@@ -82,8 +91,10 @@ export class CandleService {
         const len = curr.symbol.length - pair.length;
         const isSelectedPair = curr.symbol.indexOf(pair) >= len;
         const lastBuy = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
+        const isOnRanking = this.ranking.indexOf((t) => t._id === symbol);
 
-        if (isSelectedPair &&
+        if (isOnRanking && 
+            isSelectedPair &&
             curr.flag == 1 &&
             (last && last.flag != 1) &&
             (maxTrades && openedTrades < maxTrades)

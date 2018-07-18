@@ -17,6 +17,7 @@ export default class BackgroundWorker {
 
     destroy() {
         if (this.checkCandleInterval) this.checkCandleInterval.unsubscribe();
+        if (this.checkRankingInterval) this.checkRankingInterval.unsubscribe();
         if (this.candleService) delete this.candleService;
     }
 
@@ -29,10 +30,21 @@ export default class BackgroundWorker {
         this.config = config ? config : await this.database.getConfig().toPromise();
         if (this.config && this.config.running) {
             log('Boot running.');
-            log(`Candle interval: ${this.config.candle_interval} min.`);
-            this.candleService = new CandleService(this.database, this.config, this.binance);
-            this.checkCandleInterval = interval(this.config.candle_interval * (1000 * 60))
-                .subscribe(() => this.checkCandle());
+            this.candleService = new CandleService(
+                this.database,
+                this.config,
+                this.binance
+            );
+            if (this.config.candle_interval) {
+                log(`Candle interval: ${this.config.candle_interval} min.`);
+                this.checkCandleInterval = interval(this.config.candle_interval * (1000 * 60))
+                    .subscribe(() => this.checkCandle());
+            }
+            if (this.config.coin_choice_interval) {
+                log(`Ranking interval: ${this.config.candle_interval} min.`);
+                this.checkRankingInterval = interval(this.config.coin_choice_interval * (1000 * 60))
+                    .subscribe(() => this.checkCandle());
+            }
         }
     }
 

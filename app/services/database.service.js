@@ -15,12 +15,12 @@ export default class DatabaseService {
         if (collections.findIndex((r) => r.name == 'candles') < 0) {
             this.db.createCollection('candles', {
                 capped: true,
-                max: 10000,
+                max: 100000,
                 size: 10000000
             });
             this.db.createCollection('computed_candles', {
                 capped: true,
-                max: 10000,
+                max: 100000,
                 size: 10000000
             });
         }
@@ -147,12 +147,40 @@ export default class DatabaseService {
         )
     }
 
+    appreciation(interval, limit) {
+        return from(
+            this.db.collection('candles').aggregate([
+                { $match: { created_at: { $gte: moment().subtract(interval, "minutes").valueOf() } } },
+                { $sort: { _id: 1, } },
+                { $group: { _id: '$symbol', first: { $first: "$$ROOT" }, last: { $last: "$$ROOT" }, } },
+                {
+                    $project: {
+                        appreciation: {
+                            $multiply: [
+                                {
+                                    $subtract: [
+                                        {
+                                            $divide: ["$last.close", "$first.close"]
+                                        }, 1
+                                    ]
+                                }, 100
+                            ]
+                        }
+                    }
+                },
+                { $sort: { appreciation: -1 } }]
+            )
+            .limit(limit)
+            .toArray()
+        );
+    }
+
     paginateTrades(page_size, page) {
         return from(
             this.db.collection('trades').find({})
                 .skip(page_size * (page - 1))
                 .limit(page_size)
-                .sort({status: 1, _id: -1})
+                .sort({ status: 1, _id: -1 })
                 .toArray()
         )
     }
