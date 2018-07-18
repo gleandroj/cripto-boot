@@ -58,10 +58,11 @@ export default (app) => {
         if (authCheck(req, res)){
             const page_size = req.body.page_size || 50;
             const page = req.body.page || 1;
+            const rate = (await db.dailySuccessRate().toPromise())[0];
             res.json({
                 total: (await db.countTrades().toPromise()),
                 data: (await db.paginateTrades(page_size, page).toPromise()),
-                dailySuccessRate: (await db.dailySuccessRate().toPromise())[0].rate
+                dailySuccessRate: rate ? rate.rate : 0
             });
         }
     };
