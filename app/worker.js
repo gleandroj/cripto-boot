@@ -40,7 +40,7 @@ export default class BackgroundWorker {
                 this.binance
             );
             if (this.config.coin_choice_interval) {
-                log(`Ranking interval: ${this.config.candle_interval} min.`);
+                log(`Ranking interval: ${this.config.coin_choice_interval} min.`);
                 this.checkRankingInterval = interval(this.config.coin_choice_interval * (1000 * 60))
                     .subscribe(() => this.checkRanking());
             }
