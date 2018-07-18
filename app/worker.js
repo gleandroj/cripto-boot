@@ -25,6 +25,10 @@ export default class BackgroundWorker {
         this.candleService.checkCandle().then(() => { });
     }
 
+    checkRanking() {
+        this.candleService.updateRanking().then(() => { });
+    }
+
     async initialize(config) {
         this.destroy();
         this.config = config ? config : await this.database.getConfig().toPromise();
@@ -35,14 +39,14 @@ export default class BackgroundWorker {
                 this.config,
                 this.binance
             );
-            if (this.config.candle_interval) {
-                log(`Candle interval: ${this.config.candle_interval} min.`);
-                this.checkCandleInterval = interval(this.config.candle_interval * (1000 * 60))
-                    .subscribe(() => this.checkCandle());
-            }
             if (this.config.coin_choice_interval) {
                 log(`Ranking interval: ${this.config.candle_interval} min.`);
                 this.checkRankingInterval = interval(this.config.coin_choice_interval * (1000 * 60))
+                    .subscribe(() => this.checkRanking());
+            }
+            if (this.config.candle_interval) {
+                log(`Candle interval: ${this.config.candle_interval} min.`);
+                this.checkCandleInterval = interval(this.config.candle_interval * (1000 * 60))
                     .subscribe(() => this.checkCandle());
             }
         }
