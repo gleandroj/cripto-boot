@@ -84,7 +84,7 @@ export class CandleService {
     }
 
     async analyzeCandle(event) {
-        const pair = this.config.pair;
+        const pair = this.config ? this.config.pair : null;
         const openedTrades = await this.database.openedTrades().toPromise();
         const symbol = event.current.symbol;
         const curr = event.current;
@@ -96,7 +96,7 @@ export class CandleService {
         const isSelectedPair = curr.symbol.indexOf(pair) >= len;
         const lastBuy = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
         const isOnRanking = this.ranking.indexOf((t) => t._id === symbol) >= 0;
-        
+
         if (isOnRanking && 
             isSelectedPair &&
             curr.flag == 1 &&
