@@ -81,8 +81,13 @@ export class CandleService {
 
         const len = curr.symbol.length - pair.length;
         const isSelectedPair = curr.symbol.indexOf(pair) >= len;
+        const lastBuy = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
 
-        if (isSelectedPair && curr.flag == 1 && (last && last.flag != 1) && (maxTrades && openedTrades < maxTrades)) {
+        if (isSelectedPair &&
+            curr.flag == 1 &&
+            (last && last.flag != 1) &&
+            (maxTrades && openedTrades < maxTrades)
+        ) {
             const trade = {
                 symbol: symbol,
                 status: STATUS_OPENED,
@@ -96,16 +101,16 @@ export class CandleService {
             this.database.storeTrade(trade).subscribe(() => { });
             log(`Buy ${symbol}, ${curr.close}`);
         }
-        else if ((last && last.flag == 1) && curr.flag != 1) {
-            let lastBuy = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
-            if (lastBuy) {
-                lastBuy.status = STATUS_CLOSED;
-                lastBuy.bid_at = moment().valueOf();
-                lastBuy.bid_price = curr.close;
-                lastBuy.profit = ((lastBuy.bid_price - lastBuy.ask_price) / lastBuy.bid_price) * (100 - 0.1);
-                this.database.updateTrade(lastBuy);
-                log(`Sell ${symbol}, ${curr.close}`);
-            }
+        else if (curr.flag != 1 &&
+            (last && last.flag == 1) && // last && força o boot a não entrar de primeira
+            lastBuy
+        ) {
+            lastBuy.status = STATUS_CLOSED;
+            lastBuy.bid_at = moment().valueOf();
+            lastBuy.bid_price = curr.close;
+            lastBuy.profit = ((lastBuy.bid_price - lastBuy.ask_price) / lastBuy.bid_price) * (100 - 0.1);
+            this.database.updateTrade(lastBuy);
+            log(`Sell ${symbol}, ${curr.close}`);
         }
     }
 
