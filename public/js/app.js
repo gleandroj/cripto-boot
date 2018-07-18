@@ -90,6 +90,11 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
                     $scope.dailySuccessRate = Math.round(data.dailySuccessRate);
                     $scope.balance = data.balance ? parseFloat(data.balance.free) : 0;
                 }
+            }, (response) => {
+                if (response.status == 401) {
+                    localStorage.removeItem('auth-token');
+                    $state.go('login');
+                }
             });
         };
 
