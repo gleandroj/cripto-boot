@@ -1,6 +1,7 @@
 import { Subject, from, of } from 'rxjs';
 import { tap, map, switchMap } from 'rxjs/operators';
 import { STATUS_OPENED } from './candle.service';
+import moment from 'moment';
 
 export default class DatabaseService {
 
@@ -105,16 +106,28 @@ export default class DatabaseService {
     }
 
     dailySuccessRate() {
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
         return from(
             this.db.collection('trades').aggregate(
                 [
                     {
+                        $match: {
+                            ask_at: {
+                                $gte: moment(start).valueOf(),
+                                $lte: moment(end).valueOf()
+                            }
+                        }
+                    },
+                    {
                         $group: {
-                            _id: null, 
+                            _id: null,
                             total_trades: { $sum: 1 },
                             total_success_trades: {
-                                $sum: { 
-                                    $cond: { if: { $gt: ["$profit", 0] }, then: 1, else: 0 } 
+                                $sum: {
+                                    $cond: { if: { $gt: ["$profit", 0] }, then: 1, else: 0 }
                                 }
                             }
                         }
