@@ -78,7 +78,7 @@ export class CandleService {
         const maxTrades = this.config.simultaneous_trade;
         const amount = this.config.max_amout_per_trade || 0;
 
-        if (curr.flag == 1 && (last && last.flag != 1) && (maxTrades && openedTrades < maxTrades )) {
+        if (curr.flag == 1 && (last && last.flag != 1) && (maxTrades && openedTrades < maxTrades)) {
             const trade = {
                 symbol: symbol,
                 status: STATUS_OPENED,
@@ -94,14 +94,14 @@ export class CandleService {
         }
         else if ((last && last.flag == 1) && curr.flag != 1) {
             let lastBuy = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
-            if(lastBuy){
+            if (lastBuy) {
                 lastBuy.status = STATUS_CLOSED;
                 lastBuy.bid_at = moment().valueOf();
                 lastBuy.bid_price = curr.close;
                 lastBuy.profit = ((lastBuy.bid_price - lastBuy.ask_price) / lastBuy.bid_price) * (100 - 0.1);
                 this.database.updateTrade(lastBuy);
+                log(`Sell ${symbol}, ${curr.close}`);
             }
-            log(`Sell ${symbol}, ${curr.close}`);
         }
     }
 
