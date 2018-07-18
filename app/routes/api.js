@@ -55,7 +55,7 @@ export default (app) => {
     };
 
     const trades = async (req, res) => {
-        if (authCheck(req, res)){
+        if (authCheck(req, res)) {
             const page_size = req.body.page_size || 50;
             const page = req.body.page || 1;
             const rate = (await db.dailySuccessRate().toPromise())[0];
