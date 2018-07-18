@@ -56,8 +56,8 @@ export default (app) => {
 
     const trades = async (req, res) => {
         if (authCheck(req, res)) {
-            const page_size = req.body.page_size || 50;
-            const page = req.body.page || 1;
+            const page_size = req.query.page_size || 50;
+            const page = req.query.page || 1;
             const rate = (await db.dailySuccessRate().toPromise())[0];
             res.json({
                 total: (await db.countTrades().toPromise()),
