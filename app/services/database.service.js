@@ -185,7 +185,7 @@ export default class DatabaseService {
             this.db.collection('trades').find({})
                 .skip(page_size * (page - 1))
                 .limit(page_size)
-                .sort({ status: 1, _id: -1 })
+                .sort({ status: 1, bid_at: -1, _id: -1 })
                 .toArray()
         )
     }

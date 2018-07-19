@@ -131,7 +131,7 @@ export class CandleService {
     }
 
     async checkCandle() {
-        log('Checking canldes');
+        log('Checking candles');
         this.calc = new Calc(this.config.rsi_sensibility);
         this.makeComputedCandles().subscribe((event) => {
             if (!this.config.pair) {

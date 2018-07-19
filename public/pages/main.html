@@ -109,7 +109,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="trade in trades">
+                                <tr ng-repeat="trade in trades" ng-class="{'danger': trade.profit && trade.profit < 0, 'success': trade.profit && trade.profit > 0}">
                                     <td>
                                         {{ trade.symbol }}
                                     </td>
