@@ -100,7 +100,7 @@ export class CandleService {
         if (isOnRanking && 
             isSelectedPair &&
             curr.flag == 1 &&
-            (last && last.flag != 1) &&
+            ((last && last.flag != 1) || (!lastBuy)) &&
             (maxTrades && openedTrades < maxTrades)
         ) {
             const trade = {
