@@ -16,12 +16,12 @@ export default class DatabaseService {
             this.db.createCollection('candles', {
                 capped: true,
                 max: 100000,
-                size: 10000000
+                size: 20000000
             });
             this.db.createCollection('computed_candles', {
                 capped: true,
                 max: 100000,
-                size: 10000000
+                size: 20000000
             });
         }
     }

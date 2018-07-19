@@ -8,6 +8,9 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: example
     ports: 
       - 27017:27017
+    networks: 
+      - default
+      - net_default
   node:
     image: node:8
     user: "node"
@@ -19,3 +22,9 @@ services:
       - mongo
     ports:
       - 3000:3000
+    networks: 
+      - default
+      - net_default
+networks:
+  net_default:
+    external: true

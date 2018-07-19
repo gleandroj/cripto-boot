@@ -16,12 +16,12 @@ export class CandleService {
         this.ranking = [];
     }
 
-    logRanking(){
+    logRanking() {
         const newRanking = this.ranking.map((t) => t._id);
         log(`Ranking updated: ${newRanking.join(',')}`);
     }
 
-    async updateRanking(){
+    async updateRanking() {
         const interval = this.config.coin_choice_interval ? this.config.coin_choice_interval : 0;
         const pair = this.config.pair ? this.config.pair : '';
         this.ranking = await this.database.appreciation(pair, interval, 10).toPromise();
@@ -95,13 +95,14 @@ export class CandleService {
         const len = curr.symbol.length - pair.length;
         const isSelectedPair = curr.symbol.indexOf(pair) >= len;
         const lastBuy = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
-        const isOnRanking = this.ranking.indexOf((t) => t._id === symbol) >= 0;
+        const isOnRanking = this.ranking.filter((t) => t._id == symbol).length > 0;
 
-        if (isOnRanking && 
+        if (isOnRanking &&
             isSelectedPair &&
             curr.flag == 1 &&
-            ((last && last.flag != 1) || (!lastBuy)) &&
-            (maxTrades && openedTrades < maxTrades)
+            (last && last.flag != 1) &&
+            (maxTrades && openedTrades < maxTrades) &&
+            !lastBuy
         ) {
             const trade = {
                 symbol: symbol,
@@ -130,6 +131,7 @@ export class CandleService {
     }
 
     async checkCandle() {
+        log('Checking canldes');
         this.calc = new Calc(this.config.rsi_sensibility);
         this.makeComputedCandles().subscribe((event) => {
             if (!this.config.pair) {
