@@ -147,10 +147,15 @@ export default class DatabaseService {
         )
     }
 
-    appreciation(interval, limit) {
+    appreciation(pair, interval, limit) {
         return from(
             this.db.collection('candles').aggregate([
-                { $match: { created_at: { $gte: moment().subtract(interval, "minutes").valueOf() } } },
+                {
+                    $match: {
+                        created_at: { $gte: moment().subtract(interval, "minutes").valueOf() },
+                        symbol: { $regex: `${pair}$` }
+                    }
+                },
                 { $sort: { _id: 1, } },
                 { $group: { _id: '$symbol', first: { $first: "$$ROOT" }, last: { $last: "$$ROOT" }, } },
                 {
@@ -170,8 +175,8 @@ export default class DatabaseService {
                 },
                 { $sort: { appreciation: -1 } }]
             )
-            .limit(limit)
-            .toArray()
+                .limit(limit)
+                .toArray()
         );
     }
 

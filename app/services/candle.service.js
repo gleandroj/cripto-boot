@@ -23,7 +23,8 @@ export class CandleService {
 
     async updateRanking(){
         const interval = this.config.coin_choice_interval ? this.config.coin_choice_interval : 0;
-        this.ranking = await this.database.appreciation(interval, 5).toPromise();
+        const pair = this.config.pair ? this.config.pair : '';
+        this.ranking = await this.database.appreciation(pair, interval, 5).toPromise();
         this.logRanking();
     }
 
