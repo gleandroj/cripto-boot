@@ -57,7 +57,7 @@ export class BinanceService {
     }
 
     live() {
-        // this.wsLive().then(() => { });
+        this.wsLive().then(() => { });
         return this.candleSubject;
     }
 }
