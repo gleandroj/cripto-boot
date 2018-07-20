@@ -149,31 +149,101 @@ export default class DatabaseService {
 
     appreciation(pair, interval, limit) {
         return from(
-            this.db.collection('candles').aggregate([
-                {
-                    $match: {
-                        created_at: { $gte: moment().subtract(interval, "minutes").valueOf() },
-                        symbol: { $regex: `${pair}$` }
-                    }
-                },
-                { $sort: { _id: 1, } },
-                { $group: { _id: '$symbol', first: { $first: "$$ROOT" }, last: { $last: "$$ROOT" }, } },
-                {
-                    $project: {
-                        appreciation: {
-                            $multiply: [
-                                {
-                                    $subtract: [
-                                        {
-                                            $divide: ["$last.close", "$first.close"]
-                                        }, 1
-                                    ]
-                                }, 100
-                            ]
+            this.db.collection('candles').aggregate(
+                [
+                    {
+                        $match: {
+                            created_at: { $gte: moment().subtract(interval, "minutes").valueOf() },
+                            symbol: { $regex: `${pair}$` }
                         }
-                    }
-                },
-                { $sort: { appreciation: -1 } }]
+                    },
+                    { $sort: { _id: 1 } },
+                    {
+                        $group: {
+                            _id: '$symbol',
+                            first: { $first: "$$ROOT" },
+                            last: { $last: "$$ROOT" }
+                        }
+                    },
+                    {
+                        $project: {
+                            appreciation: {
+                                $multiply: [
+                                    {
+                                        $subtract: [
+                                            {
+                                                $divide: ["$last.close", "$first.close"]
+                                            }, 1
+                                        ]
+                                    }, 100
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        $match: {
+                            appreciation: { $gt: 0 }
+                        }
+                    },
+                    { $sort: { appreciation: -1 } }
+                ]
+            )
+                .limit(limit)
+                .toArray()
+        );
+    }
+
+    volume(pair, interval, limit) {
+        return from(
+            this.db.collection('candles').aggregate(
+                [
+                    {
+                        $match: {
+                            created_at: { $gte: moment().subtract(interval, "minutes").valueOf() },
+                            symbol: { $regex: `${pair}$` }
+                        }
+                    },
+                    { $sort: { _id: 1 } },
+                    {
+                        $group: {
+                            _id: '$symbol',
+                            first: { $first: "$$ROOT" },
+                            last: { $last: "$$ROOT" },
+                        }
+                    },
+                    {
+                        $project: {
+                            volume: {
+                                $multiply: [
+                                    {
+                                        $subtract: [
+                                            {
+                                                $divide: [
+                                                    "$last.volume",
+                                                    {
+                                                        $cond: {
+                                                            if: {
+                                                                $eq: ["$first.volume", 0]
+                                                            },
+                                                            then: 1,
+                                                            else: "$first.volume"
+                                                        }
+                                                    }
+                                                ]
+                                            }, 1
+                                        ]
+                                    }, 100
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        $match: {
+                            volume: { $gt: 0 }
+                        }
+                    },
+                    { $sort: { volume: -1 } }
+                ]
             )
                 .limit(limit)
                 .toArray()
