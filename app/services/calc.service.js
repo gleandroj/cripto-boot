@@ -12,11 +12,8 @@ export default class Calc {
     }
 
     rsi(haFec, lastHaFec, haMin, lastHaMin, lastRmaUP, lastRmaDown) {
-        lastHaFec = lastHaFec ? lastHaFec : haFec;
-        lastHaMin = lastHaMin ? lastHaMin : haMin;
-
         let up = this.rma(Math.max(haFec - lastHaFec, 0), lastRmaUP);
-        let down = this.rma(Math.abs(Math.min(haFec - lastHaFec, 0)), lastRmaDown);
+        let down = this.rma(Math.abs(Math.min(haMin - lastHaMin, 0)), lastRmaDown);
         let rsi = down == 0 ? 100 : (up == 0 ? 0 : (100 - (100 / (1 + up / down))) );
         //log(`UP: ${up}, DOWN: ${down} RSI: ${rsi}`);
         return {

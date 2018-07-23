@@ -17,24 +17,16 @@ export class CandleService {
     }
 
     logRanking() {
-        const newRanking = this.ranking.map((t) => `${t._id}, Close: ${t.appreciation}, Vol: ${t.volume}`);
+        const newRanking = this.ranking.map((t) => `${t._id}, Vol: ${t.volume}`);
         log(`Ranking updated: ${newRanking.join(' | ')}`);
     }
 
     async updateRanking() {
         const interval = this.config.coin_choice_interval ? this.config.coin_choice_interval : 0;
         const pair = this.config.pair ? this.config.pair : '';
-        const appreciation = await this.database.appreciation(pair, interval, 10).toPromise();
-        const volume = await this.database.volume(pair, interval, 10).toPromise();
-        this.ranking = appreciation.filter(app => {
-            const vol = volume.findIndex(vol => app._id === vol._id);
-            if (vol > -1) {
-                app.volume = volume[vol].volume;
-            }
-            return -1 !== vol;
-        }).sort((a, b) => a.volume < b.volume);
+        this.ranking = await this.database.volume(pair, interval, 5).toPromise();
         this.logRanking();
-    }
+    }   
 
     makeComputedCandles() {
         return this.binance.symbols().pipe(
@@ -55,9 +47,9 @@ export class CandleService {
                                         const haMin = Math.min(lastClose.low, haAbe, haFec);
                                         const result = this.calc.rsi(
                                             haFec,
-                                            lastComputed ? lastComputed.haFec : null,
+                                            lastComputed ? lastComputed.haFec : haFec,
                                             haMin,
-                                            lastComputed ? lastComputed.haMin : null,
+                                            lastComputed ? lastComputed.haMin : haMin,
                                             lastComputed ? lastComputed.up : null,
                                             lastComputed ? lastComputed.down : null
                                         );
