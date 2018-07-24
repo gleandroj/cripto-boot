@@ -16,16 +16,11 @@ export default class BackgroundWorker {
     }
 
     destroy() {
-        if (this.checkCandleInterval) this.checkCandleInterval.unsubscribe();
         if (this.checkRankingInterval) this.checkRankingInterval.unsubscribe();
         if (this.candleService){
             this.candleService.destroy();
             delete this.candleService;
         }
-    }
-
-    checkCandle() {
-        this.candleService.checkCandle().then(() => { });
     }
 
     checkRanking() {
@@ -43,19 +38,15 @@ export default class BackgroundWorker {
                 this.binance
             );
             await this.candleService.initialize();
+            await this.candleService.updateRanking();
             if (this.config.candle_interval) {
                 this.waitForCandles(this.config.candle_interval);
             }
-            // if (this.config.coin_choice_interval) {
-            //     log(`Ranking interval: ${this.config.coin_choice_interval} min.`);
-            //     this.checkRankingInterval = interval(this.config.coin_choice_interval * (1000 * 60))
-            //         .subscribe(() => this.checkRanking());
-            // }
-            // if (this.config.candle_interval) {
-            //     log(`Candle interval: ${this.config.candle_interval}.`);
-            //     this.checkCandleInterval = interval(this.config.candle_interval * (1000 * 60))
-            //         .subscribe(() => this.checkCandle());
-            // }
+            if (this.config.coin_choice_interval) {
+                log(`Ranking interval: ${this.config.coin_choice_interval} min.`);
+                this.checkRankingInterval = interval(this.config.coin_choice_interval * (1000 * 60))
+                    .subscribe(() => this.checkRanking());
+            }
         }
     }
 

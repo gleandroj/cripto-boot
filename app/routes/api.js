@@ -75,10 +75,4 @@ export default (app) => {
     app.express.route('/api/setup').post(updateConfig);
     app.express.route('/api/login').post(login);
     app.express.route('/api/logout').get(logout);
-
-    // app.express.route('/api/vela').get(getVela);
-    // app.express.route('/api/kline').get(getKline);
-    // app.express.route('/api/config').get(getConfig);
-    // app.express.route('/api/symbols').get(getSymbols);
-    // app.express.route('/api/trades').get(getTrades);
 };

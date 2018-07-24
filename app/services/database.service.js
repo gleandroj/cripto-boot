@@ -12,16 +12,11 @@ export default class DatabaseService {
 
     async createCollections() {
         const collections = await this.db.listCollections().toArray();
-        if (collections.findIndex((r) => r.name == 'candles') < 0) {
-            this.db.createCollection('candles', {
-                capped: true,
-                max: 100000,
-                size: 20000000
-            });
+        if (collections.findIndex((r) => r.name == 'computed_candles') < 0) {
             this.db.createCollection('computed_candles', {
                 capped: true,
-                max: 100000,
-                size: 20000000
+                max: 500000,
+                size: 50000000
             });
         }
     }
@@ -169,7 +164,7 @@ export default class DatabaseService {
 
     volume(pair, interval, limit) {
         return from(
-            this.db.collection('candles').aggregate(
+            this.db.collection('computed_candles').aggregate(
                 [
                     {
                         $match: {
@@ -199,7 +194,7 @@ export default class DatabaseService {
                                                             if: {
                                                                 $eq: ["$first.volume", 0]
                                                             },
-                                                            then: 1,
+                                                            then: "$last.volume",
                                                             else: "$first.volume"
                                                         }
                                                     }

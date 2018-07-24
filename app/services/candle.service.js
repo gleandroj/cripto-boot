@@ -17,7 +17,7 @@ export class CandleService {
         this.openedTrades = null;
     }
 
-    destroy(){
+    destroy() {
         delete this.calc;
     }
 
@@ -27,14 +27,16 @@ export class CandleService {
     }
 
     logRanking() {
-        const newRanking = this.ranking.map((t) => `${t._id}, Vol: ${t.volume}`);
+        const newRanking = this.ranking.map((t) => `${t.symbol}, Percent: ${t.percent}`);
         log(`Ranking updated: ${newRanking.join(' | ')}`);
     }
 
     async updateRanking() {
-        const interval = this.config.coin_choice_interval ? this.config.coin_choice_interval : 0;
-        const pair = this.config.pair ? this.config.pair : '';
-        this.ranking = await this.database.volume(pair, interval, 5).toPromise();
+        //const interval = this.config.coin_choice_interval ? this.config.coin_choice_interval : 0;
+        const pair = this.config && this.config.pair ? this.config.pair : null;
+        const regex = new RegExp(`${pair}$`);
+        const dailyStats = await this.binance.dailyStats().toPromise();
+        this.ranking = dailyStats.filter((p) => p.percent > 0 && regex.test(p.symbol)).sort((a, b) => b.percent - a.percent).slice(0, 5);
         this.logRanking();
     }
 
@@ -58,6 +60,7 @@ export class CandleService {
         const computed = {
             symbol: candle.symbol,
             interval: candle.interval,
+            volume: candle.volume,
             haAbe: haAbe,
             haFec: candle.haClose,
             haMax: haMax,
@@ -90,7 +93,7 @@ export class CandleService {
         };
         await this.database.storeTrade(trade).toPromise();
         this.openedTrades++;
-        log(`Buy ${symbol}, ${curr.close}`);
+        log(`Buy ${trade.symbol}, ${price}`);
     }
 
     async sell(trade, price) {
@@ -99,7 +102,7 @@ export class CandleService {
         trade.bid_price = price;
         trade.profit = ((trade.bid_price - trade.ask_price) / trade.bid_price) * (100 - 0.1);
         await this.database.updateTrade(trade).toPromise();
-        log(`Sell ${symbol}, ${curr.close}`);
+        log(`Sell ${trade.symbol}, ${price}`);
     }
 
     async analyzeCandle(event) {
@@ -113,23 +116,24 @@ export class CandleService {
         const amount = this.config.max_amout_per_trade || 0;
 
         const isSelectedPair = (new RegExp(`${pair}$`)).test(curr.symbol);
-        const openedTrade = this.openedTrades;
-        const isOnRanking = this.ranking.findIndex((t) => t._id == symbol) > -1;
+        const openedTrades = this.openedTrades;
+        const isOnRanking = this.ranking.findIndex((t) => t.symbol === symbol) > -1;
+        const currentTrade = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
 
         if (isOnRanking &&
             isSelectedPair &&
             curr.flag == 1 &&
             (previous && previous.flag != 1) &&
             (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
-            !openedTrade
+            !currentTrade
         ) {
             await this.buy(symbol, amount, curr.close);
         }
         else if (curr.flag != 1 &&
             (previous && previous.flag == 1) &&
-            openedTrade
+            currentTrade
         ) {
-            await this.sell(openedTrade, curr.close);
+            await this.sell(currentTrade, curr.close);
         }
     }
 }

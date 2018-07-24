@@ -12,6 +12,17 @@ export class BinanceService {
         this.liveCleanFn = null;
     }
 
+    dailyStats(){
+        return from(this.binance.dailyStats()).pipe(map(d => {
+            return d.map(r => {
+                return {
+                    symbol: r.symbol,
+                    percent: parseFloat(r.priceChangePercent)
+                };
+            })
+        }));
+    }
+
     balances(asset) {
         return from(
             this.binance.accountInfo()
@@ -37,8 +48,8 @@ export class BinanceService {
     }
 
     async wsLive(timeFrame) {
-        const symbols = ['ETHBTC'];
-        //const symbols = await this.symbols().toPromise();
+        //const symbols = ['ADXBTC'];
+        const symbols = await this.symbols().toPromise();
         log(`Awaiting for price changes of ${symbols.length} symbols.`);
         this.logLive();
         return this.binance.ws.candles(symbols, timeFrame, async candle => {
@@ -51,7 +62,7 @@ export class BinanceService {
                     high: parseFloat(candle.high),
                     low: parseFloat(candle.low),
                     haClose: (parseFloat(candle.open) + parseFloat(candle.close) + parseFloat(candle.high) + parseFloat(candle.low)) / 4,
-                    volume: parseFloat(candle.volume),
+                    volume: parseFloat(candle.buyVolume),
                     openTime: candle.startTime,
                     closeTime: candle.closeTime,
                     created_at: candle.eventTime
