@@ -8,17 +8,20 @@ export default class BackgroundWorker {
         this.app = app;
     }
 
-    storeSymbolStatus() {
+    waitForCandles(timeFrame) {
         log('Wating for price change.');
-        this.binance.live().subscribe(async (candle) => {
-            await this.database.storeCandle(candle).toPromise();
+        this.binance.live(timeFrame).subscribe(async (candle) => {
+            this.candleService.checkCandle(candle);
         });
     }
 
     destroy() {
         if (this.checkCandleInterval) this.checkCandleInterval.unsubscribe();
         if (this.checkRankingInterval) this.checkRankingInterval.unsubscribe();
-        if (this.candleService) delete this.candleService;
+        if (this.candleService){
+            this.candleService.destroy();
+            delete this.candleService;
+        }
     }
 
     checkCandle() {
@@ -32,30 +35,33 @@ export default class BackgroundWorker {
     async initialize(config) {
         this.destroy();
         this.config = config ? config : await this.database.getConfig().toPromise();
-        if (this.config && this.config.running) {
+        if (this.config != null && this.config.running && this.config.rsi_sensibility != null) {
             log('Boot running.');
             this.candleService = new CandleService(
                 this.database,
                 this.config,
                 this.binance
             );
-            if (this.config.coin_choice_interval) {
-                log(`Ranking interval: ${this.config.coin_choice_interval} min.`);
-                this.checkRankingInterval = interval(this.config.coin_choice_interval * (1000 * 60))
-                    .subscribe(() => this.checkRanking());
-            }
+            await this.candleService.initialize();
             if (this.config.candle_interval) {
-                log(`Candle interval: ${this.config.candle_interval} min.`);
-                this.checkCandleInterval = interval(this.config.candle_interval * (1000 * 60))
-                    .subscribe(() => this.checkCandle());
+                this.waitForCandles(this.config.candle_interval);
             }
+            // if (this.config.coin_choice_interval) {
+            //     log(`Ranking interval: ${this.config.coin_choice_interval} min.`);
+            //     this.checkRankingInterval = interval(this.config.coin_choice_interval * (1000 * 60))
+            //         .subscribe(() => this.checkRanking());
+            // }
+            // if (this.config.candle_interval) {
+            //     log(`Candle interval: ${this.config.candle_interval}.`);
+            //     this.checkCandleInterval = interval(this.config.candle_interval * (1000 * 60))
+            //         .subscribe(() => this.checkCandle());
+            // }
         }
     }
 
     run() {
         this.database = this.app.providers.database;
         this.binance = this.app.providers.binance;
-        this.storeSymbolStatus();
         this.database.configSubject.subscribe((config) => {
             this.initialize(config).then(() => { });
             log('Config updated.');

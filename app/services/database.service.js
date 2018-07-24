@@ -26,26 +26,6 @@ export default class DatabaseService {
         }
     }
 
-    candles() {
-        return from(this.db.collection('candles').find({}).toArray());
-    }
-
-    storeCandle(event) {
-        return from(
-            this.db.collection('candles')
-                .insertOne(event)
-        );
-    }
-
-    storeComputedCandle(candle) {
-        return from(
-            this.db.collection('computed_candles')
-                .insertOne(candle)
-        ).pipe(
-            switchMap(c => of(candle))
-        );
-    }
-
     updateConfig(config) {
         delete config._id;
         return from(
@@ -94,12 +74,6 @@ export default class DatabaseService {
     }
 
     countTrades() {
-        return from(
-            this.db.collection('trades').find({}).count()
-        )
-    }
-
-    dailyProfit() {
         return from(
             this.db.collection('trades').find({}).count()
         )
@@ -269,21 +243,23 @@ export default class DatabaseService {
         );
     }
 
-    lastPrice(symbol) {
+    storeCandle(candle) {
         return from(
-            this.db.collection('candles')
-                .findOne(
-                    { symbol: symbol },
-                    { sort: { _id: -1 } }
-                )
+            this.db.collection('computed_candles')
+                .insertOne(candle)
+        ).pipe(
+            switchMap(c => of(candle))
         );
     }
 
-    lastComputedCandle(symbol) {
+    lastCandle(symbol, interval) {
         return from(
             this.db.collection('computed_candles')
                 .findOne(
-                    { symbol: symbol },
+                    { 
+                        symbol: symbol,
+                        interval: interval
+                    },
                     { sort: { _id: -1 } }
                 )
         );

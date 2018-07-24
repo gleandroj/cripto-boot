@@ -39,7 +39,8 @@
                         <div class="col-xs-12 col-md-3 col-lg-3">
                             <div class="form-group">
                                 <label>Candle (minutes)</label>
-                                <input class="form-control" type="number" ng-model="setup.candle_interval" required>
+                                <select ng-model="setup.candle_interval" ng-options="option as option for option in timeFrames" class="form-control"></select>
+                                </select>
                             </div>
                         </div>
                         <div class="col-xs-12 col-md-3 col-lg-3">
@@ -65,7 +66,7 @@
                         <div class="col-xs-12 col-md-3 col-lg-3">
                             <div class="form-group">
                                 <label>Coin choice interval (minutes)</label>
-                                <input class="form-control" type="number" ng-model="setup.coin_choice_interval" required>
+                                <input min="0" class="form-control" type="number" ng-model="setup.coin_choice_interval" required>
                             </div>
                         </div>
 
@@ -123,7 +124,7 @@
                                         {{ trade.ask_price }}
                                     </td>
                                     <td>
-                                        {{  trade.bid_at ? (trade.bid_at | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
+                                        {{ trade.bid_at ? (trade.bid_at | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
                                     </td>
                                     <td>
                                         {{ trade.bid_price }}
@@ -146,7 +147,9 @@
                             </tfoot>
                         </table>
                     </div>
-                    <ul style="margin-bottom: 0;" class="pull-right" uib-pagination direction-links="true" boundary-links="true" boundary-link-numbers="true" force-ellipses="true" total-items="totalTrades" max-size="5" items-per-page="50" ng-change="pageChanged(currentPage)" ng-model="currentPage"></ul>
+                    <ul style="margin-bottom: 0;" class="pull-right" uib-pagination direction-links="true" boundary-links="true" boundary-link-numbers="true"
+                        force-ellipses="true" total-items="totalTrades" max-size="5" items-per-page="50" ng-change="pageChanged(currentPage)"
+                        ng-model="currentPage"></ul>
                 </div>
             </div>
         </div>

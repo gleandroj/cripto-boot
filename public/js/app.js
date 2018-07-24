@@ -43,7 +43,23 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
         if (!localStorage.getItem('auth-token')) {
             $state.go('login');
         }
-
+        $scope.timeFrames = [
+            '1m',
+            '3m',
+            '5m',
+            '15m',
+            '30m',
+            '1h',
+            '2h',
+            '4h',
+            '6h',
+            '8h',
+            '12h',
+            '1d',
+            '3d',
+            '1w',
+            '1M'
+        ];
         $scope.pairs = [
             'BTC',
             'BNB',
