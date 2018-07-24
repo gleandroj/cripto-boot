@@ -10,14 +10,21 @@ export default class BackgroundWorker {
 
     waitForCandles(timeFrame) {
         log('Wating for price change.');
-        this.binance.live(timeFrame).subscribe(async (candle) => {
+        this.liveSubscription = this.binance.live(timeFrame).subscribe(async (candle) => {
             this.candleService.checkCandle(candle);
         });
     }
 
     destroy() {
-        if (this.checkRankingInterval) this.checkRankingInterval.unsubscribe();
-        if (this.candleService){
+        if (this.checkRankingInterval) {
+            this.checkRankingInterval.unsubscribe();
+            delete this.checkRankingInterval;
+        }
+        if (this.liveSubscription) {
+            this.liveSubscription.unsubscribe();
+            delete this.liveSubscription;
+        }
+        if (this.candleService) {
             this.candleService.destroy();
             delete this.candleService;
         }
