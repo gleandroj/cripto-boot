@@ -102,6 +102,7 @@ export class CandleService {
         trade.bid_price = price;
         trade.profit = ((trade.bid_price - trade.ask_price) / trade.bid_price) * (100 - 0.1);
         await this.database.updateTrade(trade).toPromise();
+        this.openedTrades--;
         log(`Sell ${trade.symbol}, ${price}`);
     }
 
