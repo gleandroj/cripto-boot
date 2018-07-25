@@ -163,55 +163,53 @@ export default class DatabaseService {
     }
 
     volume(pair, interval, limit) {
+        const gte = moment().subtract(interval, "minutes").valueOf();
         return from(
             this.db.collection('computed_candles').aggregate(
                 [
-                    {
-                        $match: {
-                            created_at: { $gte: moment().subtract(interval, "minutes").valueOf() },
-                            symbol: { $regex: `${pair}$` }
-                        }
-                    },
-                    { $sort: { _id: 1 } },
+                    { $match: { symbol: { $regex: 'BTC$' } } },
+                    { $sort: { _id: -1 } },
+                    { $group: { _id: '$symbol', last: { $first: "$$ROOT" } } },
                     {
                         $group: {
-                            _id: '$symbol',
-                            first: { $first: "$$ROOT" },
-                            last: { $last: "$$ROOT" },
-                        }
-                    },
-                    {
-                        $project: {
-                            volume: {
-                                $multiply: [
-                                    {
-                                        $subtract: [
-                                            {
-                                                $divide: [
-                                                    "$last.volume",
-                                                    {
-                                                        $cond: {
-                                                            if: {
-                                                                $eq: ["$first.volume", 0]
-                                                            },
-                                                            then: "$last.volume",
-                                                            else: "$first.volume"
-                                                        }
-                                                    }
-                                                ]
-                                            }, 1
-                                        ]
-                                    }, 100
-                                ]
+                            _id: null,
+                            qty: { $sum: 1 },
+                            totalVolume: { $sum: "$$ROOT.last.volume" },
+                            candles: {
+                                $push: { symbol: "$$ROOT.last.symbol", volume: "$$ROOT.last.volume" }
                             }
                         }
                     },
                     {
-                        $match: {
-                            volume: { $gt: 0 }
+                        $project: {
+                            _id: 0,
+                            volumes: {
+                                $map: {
+                                    input: "$candles",
+                                    as: "candle",
+                                    in: {
+                                        symbol: "$$candle.symbol",
+                                        volume: "$$candle.volume",
+                                        percent: {
+                                            $multiply: [
+                                                {
+                                                    $divide: ["$$candle.volume", "$totalVolume"]
+                                                }, 100
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
                         }
                     },
-                    { $sort: { volume: -1 } }
+                    {
+                        $unwind: { path: "$volumes" }
+                    },
+                    {
+                        $project: { symbol: "$volumes.symbol", percent: "$volumes.percent" }
+                    },
+                    { $match: { percent: { $gt: 0 } } },
+                    { $sort: { percent: -1 } }
                 ]
             )
                 .limit(limit)
@@ -251,7 +249,7 @@ export default class DatabaseService {
         return from(
             this.db.collection('computed_candles')
                 .findOne(
-                    { 
+                    {
                         symbol: symbol,
                         interval: interval
                     },

@@ -12,17 +12,6 @@ export class BinanceService {
         this.liveCleanFn = null;
     }
 
-    dailyStats(){
-        return from(this.binance.dailyStats()).pipe(map(d => {
-            return d.map(r => {
-                return {
-                    symbol: r.symbol,
-                    percent: parseFloat(r.priceChangePercent)
-                };
-            })
-        }));
-    }
-
     balances(asset) {
         return from(
             this.binance.accountInfo()
@@ -62,7 +51,7 @@ export class BinanceService {
                     high: parseFloat(candle.high),
                     low: parseFloat(candle.low),
                     haClose: (parseFloat(candle.open) + parseFloat(candle.close) + parseFloat(candle.high) + parseFloat(candle.low)) / 4,
-                    volume: parseFloat(candle.buyVolume),
+                    volume: parseFloat(candle.quoteBuyVolume),
                     openTime: candle.startTime,
                     closeTime: candle.closeTime,
                     created_at: candle.eventTime

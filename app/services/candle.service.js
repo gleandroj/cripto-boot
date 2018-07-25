@@ -1,6 +1,4 @@
 import log from "./logger";
-import { switchMap, map, concatMap } from "rxjs/operators";
-import { from, EMPTY } from "rxjs";
 import moment from 'moment';
 import Calc from "./calc.service";
 
@@ -32,11 +30,9 @@ export class CandleService {
     }
 
     async updateRanking() {
-        //const interval = this.config.coin_choice_interval ? this.config.coin_choice_interval : 0;
+        const interval = this.config.coin_choice_interval ? this.config.coin_choice_interval : 0;
         const pair = this.config && this.config.pair ? this.config.pair : null;
-        const regex = new RegExp(`${pair}$`);
-        const dailyStats = await this.binance.dailyStats().toPromise();
-        this.ranking = dailyStats.filter((p) => p.percent > 0 && regex.test(p.symbol)).sort((a, b) => b.percent - a.percent).slice(0, 5);
+        this.ranking = await this.database.volume(pair, interval, 5).toPromise();
         this.logRanking();
     }
 
