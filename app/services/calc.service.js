@@ -7,15 +7,16 @@ export default class Calc {
         this.upsens = 100 - dnsens; //Quanto mais perto de 100 menos sensivel fica
     }
 
-    rma(cur, prev) {
-        return prev ? (0.667 * cur) + (0.333 * prev) : cur;
+    ema(cur, prev, period) {
+        return prev ? (((cur - prev) * (2 / (period + 1))) + prev): cur;
     }
 
-    rsi(haFec, lastHaFec, haMin, lastHaMin, lastRmaUP, lastRmaDown) {
-        let up = this.rma(Math.max(haFec - lastHaFec, 0), lastRmaUP);
-        let down = this.rma(Math.abs(Math.min(haMin - lastHaMin, 0)), lastRmaDown);
-        let rsi = down == 0 ? 100 : (up == 0 ? 0 : (100 - (100 / (1 + up / down))) );
-        //log(`UP: ${up}, DOWN: ${down} RSI: ${rsi}`);
+    rsi(cur, prev, lastRSI, period) {
+        lastRSI  = lastRSI ? lastRSI : {};
+        prev = prev ? prev : cur;
+        let up = this.ema(Math.max(cur - prev, 0), lastRSI.up, period);
+        let down = this.ema(Math.abs(Math.min(cur - prev, 0)), lastRSI.down, period);
+        let rsi = down == 0 ? 100 : (up == 0 ? 0 : (100 - (100 / (1 + (up / down)))) );
         return {
             rsi: rsi,
             up: up,

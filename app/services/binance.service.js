@@ -37,7 +37,7 @@ export class BinanceService {
     }
 
     async wsLive(timeFrame) {
-        //const symbols = ['ADXBTC'];
+        //const symbols = ['BTCUSDT'];
         const symbols = await this.symbols().toPromise();
         log(`Awaiting for price changes of ${symbols.length} symbols.`);
         this.logLive();
@@ -50,7 +50,6 @@ export class BinanceService {
                     close: parseFloat(candle.close),
                     high: parseFloat(candle.high),
                     low: parseFloat(candle.low),
-                    haClose: (parseFloat(candle.open) + parseFloat(candle.close) + parseFloat(candle.high) + parseFloat(candle.low)) / 4,
                     volume: parseFloat(candle.quoteBuyVolume),
                     openTime: candle.startTime,
                     closeTime: candle.closeTime,

@@ -36,7 +36,7 @@ export class CandleService {
         //this.logRanking();
     }
 
-    async checkCandle(candle) {
+    async old() {
         const previousCandle = await this.database.lastCandle(candle.symbol, candle.interval).toPromise();
 
         const haAbe = previousCandle ? ((previousCandle.haAbe + candle.haClose) / 2) : ((candle.open + candle.haClose) / 2);
@@ -58,7 +58,7 @@ export class CandleService {
             interval: candle.interval,
             volume: candle.volume,
             haAbe: haAbe,
-            haFec: candle.haClose,
+            haFec: haFec,
             haMax: haMax,
             haMin: haMin,
             close: candle.close,
@@ -73,6 +73,45 @@ export class CandleService {
         await this.analyzeCandle({
             current: computed,
             previous: previousCandle
+        });
+    }
+
+
+    async checkCandle(candle) {
+        const prev = (await this.database.lastCandle(
+            candle.symbol,
+            candle.interval
+        ).toPromise());
+
+        const haClose = ((candle.open + candle.close + candle.high + candle.low) / 4);
+        const haOpen = prev.haOpen ? ((prev.haOpen + haClose) / 2) : ((candle.open + haClose) / 2);
+        const haMax = Math.max(candle.high, haOpen, haClose);
+        const haMin = Math.min(candle.low, haOpen, haClose);
+
+        const fastMA = this.calc.ema(haClose, prev.fastMA, 12);
+        const slowMA = this.calc.ema(haClose, prev.slowMA, 26);
+        const macd = fastMA - slowMA;
+        const signal = this.calc.ema(macd, prev.macd, 9);
+        const hist = macd - signal;
+
+        const computed = {
+            haClose: haClose,
+            haOpen: haOpen,
+            haMax: haMax,
+            haMin: haMin,
+            rsi2: this.calc.rsi(haClose, prev.haClose, prev.rsi2, 2),
+            rsi14: this.calc.rsi(haClose, prev.haClose, prev.rsi14, 14),
+            fastMA: fastMA,
+            slowMA: slowMA,
+            macd: macd,
+            signal: signal,
+            hist: hist
+        };
+        Object.assign(candle, computed);
+        await this.database.storeCandle(candle).toPromise();
+        await this.analyzeCandle({
+            current: computed,
+            previous: prev
         });
     }
 
@@ -117,17 +156,22 @@ export class CandleService {
         const isOnRanking = true;//this.ranking.findIndex((t) => t.symbol === symbol) > -1;
         const currentTrade = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
 
-        if (isOnRanking &&
+        if (
+            isOnRanking &&
             isSelectedPair &&
-            curr.flag == 1 &&
+            curr.rsi2.flag == 1 &&
             (previous && previous.flag != 1) &&
             (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
-            !currentTrade
+            !currentTrade &&
+            curr.hist > 0 &&
+            curr.rsi14.rsi > 60
         ) {
             await this.buy(symbol, amount, curr.close);
-        }
-        else if (curr.flag != 1 &&
-            (previous && previous.flag == 1) &&
+        } else if (
+            //curr.rsi2.flag != 1 &&
+            //(previous && previous.flag == 1) &&
+            curr.rsi14.rsi < 70 && 
+            previous.rsi14.rsi > 70 &&
             currentTrade
         ) {
             await this.sell(currentTrade, curr.close);

@@ -1,16 +1,16 @@
 version: '2'
 services:
-  # mongo:
-  #   image: mongo
-  #   restart: always
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: root
-  #     MONGO_INITDB_ROOT_PASSWORD: example
-  #   ports: 
-  #     - 27017:27017
-  #   networks: 
-  #     - default
-  #     - net_default
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports: 
+      - 27017:27017
+    networks: 
+      - default
+      - net_default
   node:
     image: node:8
     user: "node"
@@ -18,8 +18,8 @@ services:
     working_dir: /home/node/app
     volumes:
       - ./:/home/node/app
-    # depends_on:
-    #   - mongo
+    depends_on:
+      - mongo
     ports:
       - 3000:3000
     networks: 

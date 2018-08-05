@@ -255,6 +255,24 @@ export default class DatabaseService {
                     },
                     { sort: { _id: -1 } }
                 )
+        ).pipe(
+            map((candle) => candle ? candle : {})
+        );
+    }
+
+    candlePeriod(symbol, interval, period){
+        return from(
+            this.db.collection('computed_candles')
+                .find(
+                    {
+                        symbol: symbol,
+                        interval: interval
+                    }
+                ).sort(
+                    { _id: -1 }
+                ).limit(period).toArray()
+        ).pipe(
+            map((prices) => prices ? prices : [])
         );
     }
 }
