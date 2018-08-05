@@ -93,7 +93,11 @@ export default class DatabaseService {
                     {
                         $group: {
                             _id: null,
-                            total_trades: { $sum: 1 },
+                            total_trades: { 
+                                $sum: {
+                                    $cond: { if: { $gt: ["$bid_at", 0] }, then: 1, else: 0 }
+                                }
+                             },
                             total_success_trades: {
                                 $sum: {
                                     $cond: { if: { $gt: ["$profit", 0] }, then: 1, else: 0 }
