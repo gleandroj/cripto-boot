@@ -110,7 +110,7 @@ export class CandleService {
         Object.assign(candle, computed);
         await this.database.storeCandle(candle).toPromise();
         await this.analyzeCandle({
-            current: computed,
+            current: candle,
             previous: prev
         });
     }
@@ -143,7 +143,6 @@ export class CandleService {
 
     async analyzeCandle(event) {
         const pair = this.config ? this.config.pair : null;
-
         const symbol = event.current.symbol;
         const curr = event.current;
         const previous = event.previous;
