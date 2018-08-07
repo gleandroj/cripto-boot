@@ -93,11 +93,11 @@ export default class DatabaseService {
                     {
                         $group: {
                             _id: null,
-                            total_trades: { 
+                            total_trades: {
                                 $sum: {
                                     $cond: { if: { $gt: ["$bid_at", 0] }, then: 1, else: 0 }
                                 }
-                             },
+                            },
                             total_success_trades: {
                                 $sum: {
                                     $cond: { if: { $gt: ["$profit", 0] }, then: 1, else: 0 }
@@ -109,7 +109,17 @@ export default class DatabaseService {
                         $project: {
                             _id: 0,
                             rate: {
-                                $multiply: [{ $divide: ["$total_success_trades", "$total_trades"] }, 100]
+                                $multiply: [
+                                    {
+                                        $cond: {
+                                            if: {
+                                                $gt: ["$total_trades", 0]
+                                            }, 
+                                            then: { $divide: ["$total_success_trades", "$total_trades"] }, 
+                                            else: 0
+                                        }
+                                    }, 100
+                                ]
                             }
                         }
                     }
@@ -264,7 +274,7 @@ export default class DatabaseService {
         );
     }
 
-    candlePeriod(symbol, interval, period){
+    candlePeriod(symbol, interval, period) {
         return from(
             this.db.collection('computed_candles')
                 .find(

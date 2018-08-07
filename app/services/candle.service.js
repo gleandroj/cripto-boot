@@ -135,7 +135,8 @@ export class CandleService {
         trade.status = STATUS_CLOSED;
         trade.bid_at = moment().valueOf();
         trade.bid_price = price;
-        trade.profit = ((trade.bid_price - trade.ask_price) / trade.bid_price) * (100 - 0.1);
+        //trade.profit = ((trade.bid_price - trade.ask_price) / trade.bid_price) * (100 - 0.1);
+        trade.profit = (((trade.bid_price - trade.ask_price) / trade.ask_price) - 0.001) * 100;
         await this.database.updateTrade(trade).toPromise();
         this.openedTrades--;
         log(`Sell ${trade.symbol}, ${price}`);
@@ -154,12 +155,11 @@ export class CandleService {
         const openedTrades = this.openedTrades;
         const isOnRanking = true;//this.ranking.findIndex((t) => t.symbol === symbol) > -1;
         const currentTrade = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
-
         if (
             isOnRanking &&
             isSelectedPair &&
             curr.rsi2.flag == 1 &&
-            (previous && previous.flag != 1) &&
+            (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
             (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
             !currentTrade &&
             curr.hist > 0 &&
@@ -169,7 +169,7 @@ export class CandleService {
         } else if (
             //curr.rsi2.flag != 1 &&
             //(previous && previous.flag == 1) &&
-            curr.rsi14.rsi < 70 && 
+            curr.rsi14.rsi < 70 &&
             previous.rsi14.rsi > 70 &&
             currentTrade
         ) {
