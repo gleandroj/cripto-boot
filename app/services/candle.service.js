@@ -30,10 +30,10 @@ export class CandleService {
     }
 
     async updateRanking() {
-        //const interval = this.config.coin_choice_interval ? this.config.coin_choice_interval : 0;
-        //const pair = this.config && this.config.pair ? this.config.pair : null;
-        //this.ranking = await this.database.volume(pair, interval, 5).toPromise();
-        //this.logRanking();
+        const interval = this.config.coin_choice_interval ? this.config.coin_choice_interval : 0;
+        const pair = this.config && this.config.pair ? this.config.pair : null;
+        this.ranking = await this.database.volume(pair, interval, 5).toPromise();
+        this.logRanking();
     }
 
     async old() {
@@ -153,7 +153,7 @@ export class CandleService {
 
         const isSelectedPair = (new RegExp(`${pair}$`)).test(curr.symbol);
         const openedTrades = this.openedTrades;
-        const isOnRanking = true;//this.ranking.findIndex((t) => t.symbol === symbol) > -1;
+        const isOnRanking = this.ranking.findIndex((t) => t.symbol === symbol) > -1;
         const currentTrade = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
         if (
             isOnRanking &&
