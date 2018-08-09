@@ -32,7 +32,8 @@ export class CandleService {
     async updateRanking() {
         const interval = this.config.coin_choice_interval ? this.config.coin_choice_interval : 0;
         const pair = this.config && this.config.pair ? this.config.pair : null;
-        this.ranking = await this.database.volume(pair, interval, 5).toPromise();
+        const max = this.config && this.config.coin_ranking_max ? this.config.coin_ranking_max : 5;
+        this.ranking = await this.database.volume(pair, interval, max).toPromise();
         this.logRanking();
     }
 

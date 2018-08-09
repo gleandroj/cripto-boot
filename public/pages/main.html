@@ -69,7 +69,18 @@
                                 <input min="0" class="form-control" type="number" ng-model="setup.coin_choice_interval" required>
                             </div>
                         </div>
-
+                        <div class="col-xs-12 col-md-3 col-lg-3">
+                            <div class="form-group">
+                                <label>Coin Ranking Max</label>
+                                <input min="0" class="form-control" type="number" ng-model="setup.coin_ranking_max" required>
+                            </div>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+                            <button style="margin-top: 15px" ng-disabled="loading" ng-click="updateConfig()" type="button" class="btn btn-default">Submit</button>
+                        </div>
                         <div class="col-xs-12 col-sm-12 col-md-4 col-lg-3 pull-right">
                             <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
                                 <span class="label">Running</span>
@@ -83,8 +94,6 @@
                             </div>
                         </div>
                     </div>
-                    <hr/>
-                    <button ng-disabled="loading" ng-click="updateConfig()" type="button" class="btn btn-default">Submit</button>
                 </div>
             </div>
         </div>

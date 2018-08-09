@@ -77,6 +77,7 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
             rsi_sensibility: null,
             max_amout_per_trade: null,
             coin_choice_interval: null,
+            coin_ranking_max: null,
             running: false,
             trading: false
         };
