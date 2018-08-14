@@ -156,6 +156,27 @@ export class CandleService {
         const openedTrades = this.openedTrades;
         const isOnRanking = this.ranking.findIndex((t) => t.symbol === symbol) > -1;
         const currentTrade = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
+        // if (
+        //     isOnRanking &&
+        //     isSelectedPair &&
+        //     curr.rsi2.flag == 1 &&
+        //     (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
+        //     (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
+        //     !currentTrade &&
+        //     curr.hist > 0 &&
+        //     curr.rsi14.rsi > 60
+        // ) {
+        //     await this.buy(symbol, amount, curr.close);
+        // } else if (
+        //     //curr.rsi2.flag != 1 &&
+        //     //(previous && previous.flag == 1) &&
+        //     curr.rsi14.rsi < 70 &&
+        //     previous.rsi14.rsi > 70 &&
+        //     currentTrade
+        // ) {
+        //     await this.sell(currentTrade, curr.close);
+        // }
+
         if (
             isOnRanking &&
             isSelectedPair &&
@@ -163,18 +184,15 @@ export class CandleService {
             (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
             (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
             !currentTrade &&
-            curr.hist > 0 &&
-            curr.rsi14.rsi > 60
+            curr.macd > curr.signal
         ) {
             await this.buy(symbol, amount, curr.close);
         } else if (
             //curr.rsi2.flag != 1 &&
             //(previous && previous.flag == 1) &&
-            curr.rsi14.rsi < 70 &&
-            previous.rsi14.rsi > 70 &&
-            currentTrade
-        ) {
-            await this.sell(currentTrade, curr.close);
+            curr.macd < curr.signal &&
+            currentTrade) {
+            await this.sell(currentTrade, curr.close)
         }
     }
 }
