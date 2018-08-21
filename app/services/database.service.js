@@ -74,6 +74,12 @@ export default class DatabaseService {
         )
     }
 
+    trades(){
+        return from(
+            this.db.collection('trades').find({}).toArray()
+        );
+    }
+
     dailySuccessRate() {
         const start = new Date();
         start.setHours(0, 0, 0, 0);

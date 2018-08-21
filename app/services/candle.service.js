@@ -37,47 +37,6 @@ export class CandleService {
         this.logRanking();
     }
 
-    async old() {
-        const previousCandle = await this.database.lastCandle(candle.symbol, candle.interval).toPromise();
-
-        const haAbe = previousCandle ? ((previousCandle.haAbe + candle.haClose) / 2) : ((candle.open + candle.haClose) / 2);
-        const haFec = candle.haClose;
-        const haMax = Math.max(candle.high, haAbe, haFec);
-        const haMin = Math.min(candle.low, haAbe, haFec);
-
-        const result = this.calc.rsi(
-            haFec,
-            previousCandle ? previousCandle.haFec : haFec,
-            haMin,
-            previousCandle ? previousCandle.haMin : haMin,
-            previousCandle ? previousCandle.up : null,
-            previousCandle ? previousCandle.down : null
-        );
-
-        const computed = {
-            symbol: candle.symbol,
-            interval: candle.interval,
-            volume: candle.volume,
-            haAbe: haAbe,
-            haFec: haFec,
-            haMax: haMax,
-            haMin: haMin,
-            close: candle.close,
-            created_at: moment().valueOf(),
-            flag: result.flag,
-            up: result.up,
-            down: result.down,
-            rsi: result.rsi
-        };
-
-        await this.database.storeCandle(computed).toPromise();
-        await this.analyzeCandle({
-            current: computed,
-            previous: previousCandle
-        });
-    }
-
-
     async checkCandle(candle) {
         const prev = (await this.database.lastCandle(
             candle.symbol,
@@ -106,7 +65,8 @@ export class CandleService {
             slowMA: slowMA,
             macd: macd,
             signal: signal,
-            hist: hist
+            hist: hist,
+            flagMACD: macd > signal ? 1 : 2
         };
         Object.assign(candle, computed);
         await this.database.storeCandle(candle).toPromise();
@@ -125,7 +85,9 @@ export class CandleService {
             ask_price: price,
             bid_at: null,
             bid_price: null,
-            profit: null
+            profit: null,
+            stop_loss_trigger: price * ((100 - 1.4)/100),
+            stop_loss_sell: price * ((100 - 1.5)/100)
         };
         await this.database.storeTrade(trade).toPromise();
         this.openedTrades++;
@@ -136,7 +98,6 @@ export class CandleService {
         trade.status = STATUS_CLOSED;
         trade.bid_at = moment().valueOf();
         trade.bid_price = price;
-        //trade.profit = ((trade.bid_price - trade.ask_price) / trade.bid_price) * (100 - 0.1);
         trade.profit = (((trade.bid_price - trade.ask_price) / trade.ask_price) - 0.001) * 100;
         await this.database.updateTrade(trade).toPromise();
         this.openedTrades--;
@@ -156,43 +117,33 @@ export class CandleService {
         const openedTrades = this.openedTrades;
         const isOnRanking = this.ranking.findIndex((t) => t.symbol === symbol) > -1;
         const currentTrade = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
-        // if (
-        //     isOnRanking &&
-        //     isSelectedPair &&
-        //     curr.rsi2.flag == 1 &&
-        //     (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
-        //     (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
-        //     !currentTrade &&
-        //     curr.hist > 0 &&
-        //     curr.rsi14.rsi > 60
-        // ) {
-        //     await this.buy(symbol, amount, curr.close);
-        // } else if (
-        //     //curr.rsi2.flag != 1 &&
-        //     //(previous && previous.flag == 1) &&
-        //     curr.rsi14.rsi < 70 &&
-        //     previous.rsi14.rsi > 70 &&
-        //     currentTrade
-        // ) {
-        //     await this.sell(currentTrade, curr.close);
-        // }
-
+       
         if (
             isOnRanking &&
             isSelectedPair &&
-            curr.rsi2.flag == 1 &&
-            (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
+            curr.flagMACD == 1 &&
+            (previous && previous.flagMACD != 1) &&
             (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
-            !currentTrade &&
-            curr.macd > curr.signal
+            !currentTrade
         ) {
             await this.buy(symbol, amount, curr.close);
         } else if (
-            //curr.rsi2.flag != 1 &&
-            //(previous && previous.flag == 1) &&
             curr.macd < curr.signal &&
-            currentTrade) {
+            currentTrade
+        ) {
             await this.sell(currentTrade, curr.close)
+        }else if(
+            currentTrade &&
+            curr.close <= currentTrade.stop_loss_trigger
+        ){
+            await this.sell(currentTrade, currentTrade.stop_loss_sell)
+        }else if(
+            currentTrade &&
+            (((curr.close - currentTrade.ask_price) / currentTrade.ask_price) * 100) >= 0.2
+        ){
+            currentTrade.stop_loss_trigger = currentTrade.ask_price * 1.0013;
+            currentTrade.stop_loss_sell = currentTrade.ask_price * 1.0012;
+            await this.database.updateTrade(currentTrade).toPromise();
         }
     }
 }

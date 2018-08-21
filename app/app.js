@@ -4,6 +4,7 @@ import ServiceProvider from './providers';
 import log from './services/logger';
 import session from 'express-session';
 import mongoStore from 'connect-mongo';
+import json2xls from 'json2xls';
 const MongoStore = mongoStore(session);
 
 export default class Application {
@@ -26,7 +27,8 @@ export default class Application {
             resave: true,
             saveUninitialized: true,
             store: new MongoStore({ db: this.providers.db })
-          }));
+        }));
+        this.express.use(json2xls.middleware);
         this._serviceProvider.registerRoutes();
     }
 

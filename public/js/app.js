@@ -142,6 +142,10 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
             );
         };
 
+        $scope.export = function(){
+            window.open('/api/trades/export');
+        };
+
         $scope.getServerData();
         $scope.getTrades();
 

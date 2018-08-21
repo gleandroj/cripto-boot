@@ -1,3 +1,5 @@
+
+
 export default (app) => {
     const db = app.providers.database;
     const auth = app.providers.auth;
@@ -69,8 +71,20 @@ export default (app) => {
         }
     };
 
+    const exportTrades = async (req, res) => {
+        if (authCheck(req, res) || true) {
+            const trades = (await db.trades().toPromise());
+            if(trades.length === 0){
+                res.xls('data.xlsx', [{}]);
+                return;
+            }
+            res.xls('data.xlsx', trades);
+        }
+    };
+
     app.express.route('/').get(get);
     app.express.route('/api/trades').get(trades);
+    app.express.route('/api/trades/export').get(exportTrades);
     app.express.route('/api/setup').get(getConfig);
     app.express.route('/api/setup').post(updateConfig);
     app.express.route('/api/login').post(login);
