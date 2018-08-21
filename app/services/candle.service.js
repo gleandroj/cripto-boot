@@ -128,6 +128,7 @@ export class CandleService {
         ) {
             await this.buy(symbol, amount, curr.close);
         } else if (
+            curr.macd > 0 &&
             curr.macd < curr.signal &&
             currentTrade
         ) {
