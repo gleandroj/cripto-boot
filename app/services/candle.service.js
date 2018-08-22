@@ -117,7 +117,7 @@ export class CandleService {
         const openedTrades = this.openedTrades;
         const isOnRanking = this.ranking.findIndex((t) => t.symbol === symbol) > -1;
         const currentTrade = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
-       
+
         if (
             isOnRanking &&
             isSelectedPair &&
@@ -132,18 +132,20 @@ export class CandleService {
             currentTrade
         ) {
             await this.sell(currentTrade, curr.close)
-        }else if(
-            currentTrade &&
-            curr.close <= currentTrade.stop_loss_trigger
-        ){
-            await this.sell(currentTrade, currentTrade.stop_loss_sell)
-        }else if(
-            currentTrade &&
-            (((curr.close - currentTrade.ask_price) / currentTrade.ask_price) * 100) >= 0.2
-        ){
-            currentTrade.stop_loss_trigger = currentTrade.ask_price * 1.0013;
-            currentTrade.stop_loss_sell = currentTrade.ask_price * 1.0012;
-            await this.database.updateTrade(currentTrade).toPromise();
         }
+
+        // else if(
+        //     currentTrade &&
+        //     curr.close <= currentTrade.stop_loss_trigger
+        // ){
+        //     await this.sell(currentTrade, currentTrade.stop_loss_sell)
+        // }else if(
+        //     currentTrade &&
+        //     (((curr.close - currentTrade.ask_price) / currentTrade.ask_price) * 100) >= 0.2
+        // ){
+        //     currentTrade.stop_loss_trigger = currentTrade.ask_price * 1.0013;
+        //     currentTrade.stop_loss_sell = currentTrade.ask_price * 1.0012;
+        //     await this.database.updateTrade(currentTrade).toPromise();
+        // }
     }
 }
