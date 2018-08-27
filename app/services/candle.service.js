@@ -129,7 +129,7 @@ export class CandleService {
             await this.buy(symbol, amount, curr.close);
         } else if (
             curr.rsi2.flag != 1 &&
-            (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
+            (previous && previous.rsi2 && previous.rsi2.flag == 1) &&
             currentTrade
         ) {
             await this.sell(currentTrade, curr.close)
