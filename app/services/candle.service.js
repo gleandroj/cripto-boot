@@ -121,31 +121,18 @@ export class CandleService {
         if (
             isOnRanking &&
             isSelectedPair &&
-            curr.flagMACD == 1 &&
-            (previous && previous.flagMACD != 1) &&
+            curr.rsi2.flag == 1 &&
+            (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
             (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
             !currentTrade
         ) {
             await this.buy(symbol, amount, curr.close);
         } else if (
-            curr.macd < curr.signal &&
+            curr.rsi2.flag != 1 &&
+            (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
             currentTrade
         ) {
             await this.sell(currentTrade, curr.close)
         }
-
-        // else if(
-        //     currentTrade &&
-        //     curr.close <= currentTrade.stop_loss_trigger
-        // ){
-        //     await this.sell(currentTrade, currentTrade.stop_loss_sell)
-        // }else if(
-        //     currentTrade &&
-        //     (((curr.close - currentTrade.ask_price) / currentTrade.ask_price) * 100) >= 0.2
-        // ){
-        //     currentTrade.stop_loss_trigger = currentTrade.ask_price * 1.0013;
-        //     currentTrade.stop_loss_sell = currentTrade.ask_price * 1.0012;
-        //     await this.database.updateTrade(currentTrade).toPromise();
-        // }
     }
 }
