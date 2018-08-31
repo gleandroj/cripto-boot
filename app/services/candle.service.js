@@ -66,7 +66,7 @@ export class CandleService {
             macd: macd,
             signal: signal,
             hist: hist,
-            flagMACD: macd > signal && macd > 0 ? 1 : 2
+            flagMACD: macd > signal
         };
         Object.assign(candle, computed);
         await this.database.storeCandle(candle).toPromise();
