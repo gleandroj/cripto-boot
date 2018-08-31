@@ -86,8 +86,8 @@ export class CandleService {
             bid_at: null,
             bid_price: null,
             profit: null,
-            stop_loss_trigger: price * ((100 - 1.4)/100),
-            stop_loss_sell: price * ((100 - 1.5)/100)
+            stop_loss_trigger: price * ((100 - 1.4) / 100),
+            stop_loss_sell: price * ((100 - 1.5) / 100)
         };
         await this.database.storeTrade(trade).toPromise();
         this.openedTrades++;
@@ -121,6 +121,8 @@ export class CandleService {
         if (
             isOnRanking &&
             isSelectedPair &&
+            curr.rsi2.flag == 1 &&
+            (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
             curr.flagMACD == 1 &&
             (previous && previous.flagMACD != 1) &&
             (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
@@ -133,19 +135,5 @@ export class CandleService {
         ) {
             await this.sell(currentTrade, curr.close)
         }
-
-        // else if(
-        //     currentTrade &&
-        //     curr.close <= currentTrade.stop_loss_trigger
-        // ){
-        //     await this.sell(currentTrade, currentTrade.stop_loss_sell)
-        // }else if(
-        //     currentTrade &&
-        //     (((curr.close - currentTrade.ask_price) / currentTrade.ask_price) * 100) >= 0.2
-        // ){
-        //     currentTrade.stop_loss_trigger = currentTrade.ask_price * 1.0013;
-        //     currentTrade.stop_loss_sell = currentTrade.ask_price * 1.0012;
-        //     await this.database.updateTrade(currentTrade).toPromise();
-        // }
     }
 }
