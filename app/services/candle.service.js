@@ -80,7 +80,7 @@ export class CandleService {
         const trade = {
             symbol: symbol,
             status: STATUS_OPENED,
-            amount: amount,
+            amount: (amount/price).toFixed(2),
             ask_at: moment().valueOf(),
             ask_price: price,
             bid_at: null,
@@ -98,7 +98,7 @@ export class CandleService {
         trade.status = STATUS_CLOSED;
         trade.bid_at = moment().valueOf();
         trade.bid_price = price;
-        trade.profit = (((trade.bid_price - trade.ask_price) / trade.ask_price) - 0.001) * 100;
+        trade.profit = (((trade.bid_price - trade.ask_price) / trade.ask_price) - 0.0015) * 100;
         await this.database.updateTrade(trade).toPromise();
         this.openedTrades--;
         log(`Sell ${trade.symbol}, ${price}`);
