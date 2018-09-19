@@ -1,6 +1,7 @@
 import log from "./logger";
 import moment from 'moment';
 import Calc from "./calc.service";
+import { switchMap, delay } from "rxjs/operators";
 
 export const STATUS_OPENED = 0;
 export const STATUS_CLOSED = 1;
@@ -77,35 +78,96 @@ export class CandleService {
     }
 
     async buy(symbol, amount, price) {
-        const trade = {
-            symbol: symbol,
-            status: STATUS_OPENED,
-            amount: (amount/price).toFixed(2),
-            ask_at: moment().valueOf(),
-            ask_price: price,
-            bid_at: null,
-            bid_price: null,
-            profit: null,
-            stop_loss_trigger: price * ((100 - 1.4) / 100),
-            stop_loss_sell: price * ((100 - 1.5) / 100)
-        };
-        await this.database.storeTrade(trade).toPromise();
-        this.openedTrades++;
-        log(`Buy ${trade.symbol}, ${price}`);
+        try {
+            const quantity = (amount / price).toFixed(2);
+            const binanceTrade = await this.binance.buyMarket(
+                symbol,
+                quantity
+            ).pipe(
+                delay(1000),
+                switchMap((r) => this.binance.getLastTrade(symbol))
+            ).toPromise();
+            price = parseFloat(binanceTrade.price);
+            const stop_loss_trigger = (price * ((100 - 1.4) / 100)).toFixed(6);
+            const stop_loss_sell = (price * ((100 - 1.5) / 100)).toFixed(6);
+            let stopLossTrade = {};
+            try {
+                stopLossTrade = await this.binance.stopLoss(
+                    symbol,
+                    quantity,
+                    stop_loss_trigger,
+                    stop_loss_sell
+                ).toPromise();
+            } catch (e) {
+                console.log('Stop loss error: ', e);
+                console.log(this.binanceTrade);
+                stopLossTrade = {};
+            }
+            const trade = {
+                symbol: symbol,
+                status: STATUS_OPENED,
+                amount: (amount / price).toFixed(2),
+                transactTime: binanceTrade.transactTime,
+                ask_at: moment().valueOf(),
+                ask_price: price,
+                bid_at: null,
+                bid_price: null,
+                profit: null,
+                stop_loss_trigger: stop_loss_trigger,
+                stop_loss_sell: stop_loss_sell,
+                binanceBuyTrade: binanceTrade,
+                stopLossOrder: stopLossTrade
+            };
+            await this.database.storeTrade(trade).toPromise();
+            this.openedTrades++;
+            log(`Buy ${trade.symbol}, ${price}`);
+            console.log(trade);
+        } catch (e) {
+            console.log('Error: ', e);
+        }
     }
 
     async sell(trade, price) {
-        trade.status = STATUS_CLOSED;
-        trade.bid_at = moment().valueOf();
-        trade.bid_price = price;
-        trade.profit = (((trade.bid_price - trade.ask_price) / trade.ask_price) - 0.0015) * 100;
-        await this.database.updateTrade(trade).toPromise();
-        this.openedTrades--;
-        log(`Sell ${trade.symbol}, ${price}`);
+        try {
+            if (trade.stopLossOrder && trade.stopLossOrder.orderId) {
+                await this.binance.cancelOrder({
+                    symbol: trade.symbol,
+                    orderId: trade.stopLossOrder.orderId
+                });
+            }
+
+            const binanceTrade = await this.binance.sellMarket(
+                trade.symbol,
+                trade.amount
+            ).pipe(
+                delay(1000),
+                switchMap((r) => {
+                    console.log(r);
+                    return this.binance.getLastTrade(symbol);
+                })
+            ).toPromise();
+
+            console.log(
+                binanceTrade
+            );
+
+            trade.status = STATUS_CLOSED;
+            trade.bid_at = moment().valueOf();
+            trade.bid_price = price;
+            trade.profit = (((trade.bid_price - trade.ask_price) / trade.ask_price) - 0.0015) * 100;
+            trade.binanceSellTrade = binanceTrade;
+            await this.database.updateTrade(trade).toPromise();
+            this.openedTrades--;
+            log(`Sell ${trade.symbol}, ${price}`);
+            console.log(trade);
+        } catch (e) {
+            console.log('Error: ', e);
+        }
     }
 
     async analyzeCandle(event) {
         const pair = this.config ? this.config.pair : null;
+        const trading = this.config ? this.config.trading : false;
         const symbol = event.current.symbol;
         const curr = event.current;
         const previous = event.previous;
@@ -119,18 +181,19 @@ export class CandleService {
         const currentTrade = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
 
         if (
-            isOnRanking &&
-            isSelectedPair &&
-            curr.rsi2.flag == 1 &&
-            (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
-            curr.flagMACD == 1 &&
-            (previous && previous.flagMACD != 1) &&
-            (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
+            // isOnRanking &&
+            // isSelectedPair &&
+            // curr.rsi2.flag == 1 &&
+            // (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
+            // curr.flagMACD == 1 &&
+            // (previous && previous.flagMACD != 1) &&
+            // (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
             !currentTrade
+            && trading
         ) {
             await this.buy(symbol, amount, curr.close);
         } else if (
-            curr.macd < curr.signal &&
+            //curr.macd < curr.signal &&
             currentTrade
         ) {
             await this.sell(currentTrade, curr.close)

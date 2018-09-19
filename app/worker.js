@@ -44,8 +44,10 @@ export default class BackgroundWorker {
                 this.config,
                 this.binance
             );
+            
             await this.candleService.initialize();
             await this.candleService.updateRanking();
+
             if (this.config.candle_interval) {
                 this.waitForCandles(this.config.candle_interval);
                 log(`Candle interval: ${this.config.candle_interval}.`);

@@ -5,6 +5,7 @@ import log from './logger';
 export class BinanceService {
 
     constructor(binance) {
+        binance.verbose = true;
         this.binance = binance;
         this._symbols = null;
         this.candleSubject = new Subject();
@@ -16,6 +17,82 @@ export class BinanceService {
         return from(
             this.binance.accountInfo()
         ).pipe(map(resp => resp.balances.filter(b => b.asset == asset)[0]));
+    }
+
+    getClient() {
+        return this.binance;
+    }
+
+    getOrder(symbol, orderId) {
+        return from(
+            this.binance.getOrder({
+                symbol: symbol,
+                orderId: orderId
+            })
+        );
+    }
+
+    buyMarket(symbol, qnty) {
+        return from(
+            this.binance.order({
+                symbol: symbol,
+                quantity: qnty,
+                side: 'BUY',
+                type: 'MARKET'
+            })
+        );
+    }
+
+    getLastTrade(symbol) {
+        return from(
+            this.binance.myTrades({
+                symbol: symbol,
+                limit: 1
+            })
+        ).pipe(map(r => r[0]));
+    }
+
+    sellMarket(symbol, qnty) {
+        return from(
+            this.binance.order({
+                symbol: symbol,
+                quantity: qnty,
+                side: 'SELL',
+                type: 'MARKET'
+            })
+        );
+    }
+
+    stopLoss(symbol, qty, stopPriceTrigger, stopPriceSell) {
+        console.log(
+            {
+                symbol: symbol,
+                quantity: qty,
+                side: 'SELL',
+                type: 'STOP_LOSS_LIMIT',
+                stopPrice: stopPriceTrigger,
+                price: stopPriceSell
+            }
+        );
+        return from(
+            this.binance.order({
+                symbol: symbol,
+                quantity: qty,
+                side: 'SELL',
+                type: 'STOP_LOSS_LIMIT',
+                stopPrice: stopPriceTrigger,
+                price: stopPriceSell
+            })
+        );
+    }
+
+    cancelOrder(symbol, orderId) {
+        return from(
+            this.binance.cancelOrder({
+                symbol: symbol,
+                orderId: orderId
+            })
+        );
     }
 
     symbols() {
@@ -37,8 +114,8 @@ export class BinanceService {
     }
 
     async wsLive(timeFrame) {
-        //const symbols = ['BNBBTC'];
-        const symbols = await this.symbols().toPromise();
+        const symbols = ['NEOBTC'];
+        //const symbols = await this.symbols().toPromise();
         log(`Awaiting for price changes of ${symbols.length} symbols.`);
         this.logLive();
         return this.binance.ws.candles(symbols, timeFrame, async candle => {
