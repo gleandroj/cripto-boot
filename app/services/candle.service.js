@@ -22,6 +22,7 @@ export class CandleService {
 
     async initialize() {
         this.openedTrades = await this.database.openedTrades().toPromise();
+        this.exchangeInfo = await this.binance.exchangeInfo().toPromise();
         this.calc = new Calc(this.config.rsi_sensibility);
     }
 
@@ -77,9 +78,9 @@ export class CandleService {
         });
     }
 
-    async buy(symbol, amount, price) {
+    async buy(symbol, quantity, price) {
         try {
-            const quantity = (amount / price).toFixed(2);
+            const quotePrecision = this.getMaxPriceDecimalPlacesForSymbol(symbol);
             const binanceTrade = await this.binance.buyMarket(
                 symbol,
                 quantity
@@ -88,10 +89,11 @@ export class CandleService {
                 switchMap((r) => this.binance.getLastTrade(symbol))
             ).toPromise();
             price = parseFloat(binanceTrade.price);
-            const stop_loss_trigger = (price * ((100 - 1.4) / 100)).toFixed(6);
-            const stop_loss_sell = (price * ((100 - 1.5) / 100)).toFixed(6);
-            let stopLossTrade = {};
+            const stop_loss_trigger = (price * ((100 - 1.5) / 100)).toFixed(quotePrecision);
+            const stop_loss_sell = (price * ((100 - 1.8) / 100)).toFixed(quotePrecision);
+            let stopLossTrade = null;
             try {
+                //console.log(binanceTrade, stop_loss_sell, stop_loss_trigger);
                 stopLossTrade = await this.binance.stopLoss(
                     symbol,
                     quantity,
@@ -101,12 +103,12 @@ export class CandleService {
             } catch (e) {
                 console.log('Stop loss error: ', e);
                 console.log(this.binanceTrade);
-                stopLossTrade = {};
+                stopLossTrade = null;
             }
             const trade = {
                 symbol: symbol,
                 status: STATUS_OPENED,
-                amount: (amount / price).toFixed(2),
+                quantity: quantity,
                 transactTime: binanceTrade.transactTime,
                 ask_at: moment().valueOf(),
                 ask_price: price,
@@ -121,7 +123,7 @@ export class CandleService {
             await this.database.storeTrade(trade).toPromise();
             this.openedTrades++;
             log(`Buy ${trade.symbol}, ${price}`);
-            console.log(trade);
+            //console.log(trade);
         } catch (e) {
             console.log('Error: ', e);
         }
@@ -129,40 +131,72 @@ export class CandleService {
 
     async sell(trade, price) {
         try {
-            if (trade.stopLossOrder && trade.stopLossOrder.orderId) {
-                await this.binance.cancelOrder({
-                    symbol: trade.symbol,
-                    orderId: trade.stopLossOrder.orderId
-                });
+            if (trade.stopLossOrder != null && trade.stopLossOrder.orderId != null) {
+                await this.binance.cancelOrder(
+                    trade.symbol,
+                    trade.stopLossOrder.orderId
+                ).toPromise();
             }
-
             const binanceTrade = await this.binance.sellMarket(
                 trade.symbol,
-                trade.amount
+                trade.quantity
             ).pipe(
                 delay(1000),
                 switchMap((r) => {
-                    console.log(r);
-                    return this.binance.getLastTrade(symbol);
+                    return this.binance.getLastTrade(trade.symbol);
                 })
             ).toPromise();
 
-            console.log(
-                binanceTrade
-            );
-
             trade.status = STATUS_CLOSED;
             trade.bid_at = moment().valueOf();
-            trade.bid_price = price;
+            trade.bid_price = parseFloat(binanceTrade.price);
             trade.profit = (((trade.bid_price - trade.ask_price) / trade.ask_price) - 0.0015) * 100;
             trade.binanceSellTrade = binanceTrade;
             await this.database.updateTrade(trade).toPromise();
             this.openedTrades--;
             log(`Sell ${trade.symbol}, ${price}`);
-            console.log(trade);
         } catch (e) {
             console.log('Error: ', e);
         }
+    }
+
+    getExchangeInfoForSymbol(symbol) {
+        return this.exchangeInfo.symbols.find((info) => info.symbol === symbol);
+    }
+
+    getLotSizeFilterForSymbol(symbol) {
+        const symbolInfo = this.getExchangeInfoForSymbol(symbol);
+        const lotSizeFilter = symbolInfo.filters.find(filter => filter.filterType === 'LOT_SIZE');
+
+        return {
+            filterType: lotSizeFilter.filterType,
+            minQty: parseFloat(lotSizeFilter.minQty),
+            maxQty: parseFloat(lotSizeFilter.maxQty),
+            stepSize: lotSizeFilter.stepSize
+        };
+    }
+
+    getPriceFilterForSymbol(symbol) {
+        const symbolInfo = this.getExchangeInfoForSymbol(symbol);
+        const priceFilter = symbolInfo.filters.find(filter => filter.filterType === 'PRICE_FILTER');
+        return {
+            filterType: priceFilter.filterType,
+            minPrice: parseFloat(priceFilter.minPrice),
+            maxPrice: parseFloat(priceFilter.maxPrice),
+            tickSize: priceFilter.tickSize
+        };
+    }
+
+    getMaxPriceDecimalPlacesForSymbol(symbol) {
+        const priceFilter = this.getPriceFilterForSymbol(symbol);
+        const priceMaxUnitAux = priceFilter.tickSize.replace(/\.?0+$/, '').split('.');
+        return priceMaxUnitAux.length > 1 ? priceMaxUnitAux[1].length : 0;
+    }
+
+    getMaxQuantityDecimalPlacesForSymbol(symbol) {
+        const loteSizeFilter = this.getLotSizeFilterForSymbol(symbol);
+        const qntyMaxUnitAux = loteSizeFilter.stepSize.replace(/\.?0+$/, '').split('.');
+        return qntyMaxUnitAux.length > 1 ? qntyMaxUnitAux[1].length : 0;
     }
 
     async analyzeCandle(event) {
@@ -179,21 +213,25 @@ export class CandleService {
         const openedTrades = this.openedTrades;
         const isOnRanking = this.ranking.findIndex((t) => t.symbol === symbol) > -1;
         const currentTrade = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
-
+        const quantity = (amount / curr.close).toFixed(
+            this.getMaxQuantityDecimalPlacesForSymbol(symbol)
+        );
+        const lotSizeFilter = this.getLotSizeFilterForSymbol(symbol);
         if (
-            // isOnRanking &&
-            // isSelectedPair &&
-            // curr.rsi2.flag == 1 &&
-            // (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
-            // curr.flagMACD == 1 &&
-            // (previous && previous.flagMACD != 1) &&
-            // (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
+            isOnRanking &&
+            isSelectedPair &&
+            curr.rsi2.flag == 1 &&
+            (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
+            curr.flagMACD == 1 &&
+            (previous && previous.flagMACD != 1) &&
+            (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
+            quantity >= lotSizeFilter.minQty && quantity <= lotSizeFilter.maxQty &&
             !currentTrade
             && trading
         ) {
-            await this.buy(symbol, amount, curr.close);
+            await this.buy(symbol, quantity, curr.close);
         } else if (
-            //curr.macd < curr.signal &&
+            curr.macd < curr.signal &&
             currentTrade
         ) {
             await this.sell(currentTrade, curr.close)

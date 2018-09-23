@@ -13,6 +13,12 @@ export class BinanceService {
         this.liveCleanFn = null;
     }
 
+    exchangeInfo(){
+        return from(
+          this.binance.exchangeInfo()  
+        );
+    }
+
     balances(asset) {
         return from(
             this.binance.accountInfo()
@@ -64,16 +70,6 @@ export class BinanceService {
     }
 
     stopLoss(symbol, qty, stopPriceTrigger, stopPriceSell) {
-        console.log(
-            {
-                symbol: symbol,
-                quantity: qty,
-                side: 'SELL',
-                type: 'STOP_LOSS_LIMIT',
-                stopPrice: stopPriceTrigger,
-                price: stopPriceSell
-            }
-        );
         return from(
             this.binance.order({
                 symbol: symbol,
@@ -114,8 +110,8 @@ export class BinanceService {
     }
 
     async wsLive(timeFrame) {
-        const symbols = ['NEOBTC'];
-        //const symbols = await this.symbols().toPromise();
+        //const symbols = ['XRPBTC'];
+        const symbols = await this.symbols().toPromise();
         log(`Awaiting for price changes of ${symbols.length} symbols.`);
         this.logLive();
         return this.binance.ws.candles(symbols, timeFrame, async candle => {
