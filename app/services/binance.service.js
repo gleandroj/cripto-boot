@@ -139,8 +139,8 @@ export class BinanceService {
     }
 
     async wsLive(timeFrame) {
-        const symbols = ['XRPBTC'];
-        //const symbols = await this.symbols().toPromise();
+        //const symbols = ['XRPBTC'];
+        const symbols = await this.symbols().toPromise();
         log(`Awaiting for price changes of ${symbols.length} symbols.`);
         this.logLive();
         return this.binance.ws.candles(symbols, timeFrame, async candle => {
