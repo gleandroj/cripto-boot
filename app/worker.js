@@ -1,6 +1,7 @@
 import log from './services/logger';
 import { interval } from 'rxjs';
 import { CandleService } from './services/candle.service';
+import { BinanceTrader } from './services/exchange/binance-trader';
 
 export default class BackgroundWorker {
 
@@ -37,26 +38,44 @@ export default class BackgroundWorker {
     async initialize(config) {
         this.destroy();
         this.config = config ? config : await this.database.getConfig().toPromise();
-        if (this.config != null && this.config.running && this.config.rsi_sensibility != null) {
+
+        if (
+            this.config != null &&
+            this.config.candle_interval != null &&
+            this.config.coin_choice_interval != null &&
+            this.config.coin_ranking_max != null &&
+            this.config.max_amout_per_trade != null &&
+            this.config.pair != null &&
+            this.config.rsi_sensibility != null &&
+            this.config.running != null &&
+            this.config.running === true &&
+            this.config.simultaneous_trade != null
+        ) {
+            log('---------------------');
+            log(`Exchange: Binance.`);
             log('Boot running.');
+            log(`Pair: ${this.config.pair}.`);
+            log(`Simultaneous Trades: ${this.config.simultaneous_trade}.`);
+            log(`Candle interval: ${this.config.candle_interval}.`);
+            log(`RSI Sensibility: ${this.config.rsi_sensibility}.`);
+            log(`Maximum Amount per Trade: ${this.config.max_amout_per_trade}.`);
+            log(`Coin choice interval (minutes): ${this.config.coin_choice_interval} min.`);
+            log(`Coin Ranking Max: ${this.config.coin_ranking_max}.`);
+            log(`Trading: ${this.config.trading}.`)
+            log('---------------------')
             this.candleService = new CandleService(
+                new BinanceTrader(this.binance),
                 this.database,
-                this.config,
-                this.binance
+                this.config
             );
-            
+
             await this.candleService.initialize();
             await this.candleService.updateRanking();
 
-            if (this.config.candle_interval) {
-                this.waitForCandles(this.config.candle_interval);
-                log(`Candle interval: ${this.config.candle_interval}.`);
-            }
-            if (this.config.coin_choice_interval) {
-                log(`Ranking interval: ${this.config.coin_choice_interval} min.`);
-                this.checkRankingInterval = interval(this.config.coin_choice_interval * (1000 * 60))
-                    .subscribe(() => this.checkRanking());
-            }
+            this.waitForCandles(this.config.candle_interval);
+            this.checkRankingInterval = interval(this.config.coin_choice_interval * (1000 * 60))
+                .subscribe(() => this.checkRanking());
+
         }
     }
 

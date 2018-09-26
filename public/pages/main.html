@@ -21,78 +21,91 @@
                     <h3 class="panel-title">Setup</h3>
                 </div>
                 <div class="panel-body">
-                    <div class="row">
-                        <div class="col-xs-12 col-md-3 col-lg-3">
-                            <div class="form-group">
-                                <label>Pair</label>
-                                <select ng-model="setup.pair" ng-options="option as option for option in pairs" class="form-control"></select>
-                                </select>
+                    <form name="form">
+
+                        <div class="row">
+                            <div class="col-xs-12 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label>Pair</label>
+                                    <select name="pair" ng-model="setup.pair" ng-options="option as option for option in pairs"
+                                        required class="form-control"></select>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label>Simultaneous Trades</label>
+                                    <input name="simultaneous_trade" class="form-control" type="number" ng-model="setup.simultaneous_trade"
+                                        required>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label>Candle interval</label>
+                                    <select name="candle_interval" ng-model="setup.candle_interval" ng-options="option as option for option in timeFrames"
+                                        required class="form-control"></select>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label>RSI Sensibility</label>
+                                    <input class="form-control" type="number" name="rsi_sensibility" id="rsi_sensibility"
+                                        ng-model="setup.rsi_sensibility" required>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-xs-12 col-md-3 col-lg-3">
-                            <div class="form-group">
-                                <label>Simultaneous Trades</label>
-                                <input class="form-control" type="number" ng-model="setup.simultaneous_trade" required>
+                        <div class="row">
+                            <div class="col-xs-12 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label>Balance</label>
+                                    <input class="form-control" disabled type="number" name="balance" ng-model="balance">
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label>Maximum Amount per Trade</label>
+                                    <input class="form-control" type="number" name="max_amout_per_trade" ng-model="setup.max_amout_per_trade"
+                                        required>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label>Coin choice interval (minutes)</label>
+                                    <input min="0" class="form-control" type="number" name="coin_choice_interval"
+                                        ng-model="setup.coin_choice_interval" required>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label>Coin Ranking Max</label>
+                                    <input min="0" class="form-control" type="number" name="coin_ranking_max" ng-model="setup.coin_ranking_max"
+                                        required>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-xs-12 col-md-3 col-lg-3">
-                            <div class="form-group">
-                                <label>Candle (minutes)</label>
-                                <select ng-model="setup.candle_interval" ng-options="option as option for option in timeFrames" class="form-control"></select>
-                                </select>
+                        <hr />
+                        <div class="row">
+                            <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+                                <button name="submit" style="margin-top: 15px" ng-disabled="form.$invalid || loading" ng-click="updateConfig()" type="button"
+                                    class="btn btn-default">Submit</button>
+                            </div>
+                            <div class="col-xs-12 col-sm-12 col-md-4 col-lg-3 pull-right">
+                                <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+                                    <span class="label">Running</span>
+                                    <input id="switch-shadow" name="running" ng-model="setup.running" class="switch switch--shadow"
+                                        type="checkbox">
+                                    <label for="switch-shadow"></label>
+                                </div>
+                                <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+                                    <span class="label">Trading</span>
+                                    <input id="allowTrade" name="trading" ng-model="setup.trading" class="switch switch--shadow"
+                                        type="checkbox">
+                                    <label for="allowTrade"></label>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-xs-12 col-md-3 col-lg-3">
-                            <div class="form-group">
-                                <label>RSI Sensibility</label>
-                                <input class="form-control" type="number" id="rsi_sensibility" ng-model="setup.rsi_sensibility" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-xs-12 col-md-3 col-lg-3">
-                            <div class="form-group">
-                                <label>Balance</label>
-                                <input class="form-control" disabled type="number" ng-model="balance" required>
-                            </div>
-                        </div>
-                        <div class="col-xs-12 col-md-3 col-lg-3">
-                            <div class="form-group">
-                                <label>Maximum Amount per Trade</label>
-                                <input class="form-control" type="number" ng-model="setup.max_amout_per_trade" required>
-                            </div>
-                        </div>
-                        <div class="col-xs-12 col-md-3 col-lg-3">
-                            <div class="form-group">
-                                <label>Coin choice interval (minutes)</label>
-                                <input min="0" class="form-control" type="number" ng-model="setup.coin_choice_interval" required>
-                            </div>
-                        </div>
-                        <div class="col-xs-12 col-md-3 col-lg-3">
-                            <div class="form-group">
-                                <label>Coin Ranking Max</label>
-                                <input min="0" class="form-control" type="number" ng-model="setup.coin_ranking_max" required>
-                            </div>
-                        </div>
-                    </div>
-                    <hr/>
-                    <div class="row">
-                        <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
-                            <button style="margin-top: 15px" ng-disabled="loading" ng-click="updateConfig()" type="button" class="btn btn-default">Submit</button>
-                        </div>
-                        <div class="col-xs-12 col-sm-12 col-md-4 col-lg-3 pull-right">
-                            <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
-                                <span class="label">Running</span>
-                                <input id="switch-shadow" ng-model="setup.running" class="switch switch--shadow" type="checkbox">
-                                <label for="switch-shadow"></label>
-                            </div>
-                            <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
-                                <span class="label">Trading</span>
-                                <input id="allowTrade" ng-model="setup.trading" class="switch switch--shadow" type="checkbox">
-                                <label for="allowTrade"></label>
-                            </div>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -159,9 +172,9 @@
                             </tfoot>
                         </table>
                     </div>
-                    <ul style="margin-bottom: 0;" class="pull-right" uib-pagination direction-links="true" boundary-links="true" boundary-link-numbers="true"
-                        force-ellipses="true" total-items="totalTrades" max-size="5" items-per-page="50" ng-change="pageChanged(currentPage)"
-                        ng-model="currentPage"></ul>
+                    <ul style="margin-bottom: 0;" class="pull-right" uib-pagination direction-links="true"
+                        boundary-links="true" boundary-link-numbers="true" force-ellipses="true" total-items="totalTrades"
+                        max-size="5" items-per-page="50" ng-change="pageChanged(currentPage)" ng-model="currentPage"></ul>
                 </div>
             </div>
         </div>

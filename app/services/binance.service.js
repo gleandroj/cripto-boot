@@ -1,6 +1,7 @@
 import { from, Subject } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import log from './logger';
+import request from 'request-promise';
 
 export class BinanceService {
 
@@ -13,10 +14,38 @@ export class BinanceService {
         this.liveCleanFn = null;
     }
 
-    exchangeInfo(){
+    exchangeInfo() {
+        const options = {
+            url: 'https://www.binance.com/exchange/public/product',
+            headers: {
+                Connection: 'keep-alive',
+                'User-Agent': 'Request-Promise',
+            },
+            json: true,
+        };
+        const getOrderMinSize = currency => {
+            if (currency === 'BTC') return 0.001;
+            else if (currency === 'ETH') return 0.01;
+            else if (currency === 'USDT') return 10;
+            else return 1;
+        };
         return from(
-          this.binance.exchangeInfo()  
-        );
+            request(options)
+        ).pipe(map((body) => {
+            if (!body && !body.data) {
+                throw new Error('Unable to fetch product list, response was empty');
+            }
+            return body.data.map((market) => {
+                return {
+                    symbol: market.symbol,
+                    minimalOrder: {
+                        amount: parseFloat(market.minTrade),
+                        price: parseFloat(market.tickSize),
+                        order: getOrderMinSize(market.quoteAsset)
+                    },
+                };
+            });
+        }));
     }
 
     balances(asset) {
@@ -110,8 +139,8 @@ export class BinanceService {
     }
 
     async wsLive(timeFrame) {
-        //const symbols = ['XRPBTC'];
-        const symbols = await this.symbols().toPromise();
+        const symbols = ['XRPBTC'];
+        //const symbols = await this.symbols().toPromise();
         log(`Awaiting for price changes of ${symbols.length} symbols.`);
         this.logLive();
         return this.binance.ws.candles(symbols, timeFrame, async candle => {

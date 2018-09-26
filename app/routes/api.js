@@ -58,14 +58,25 @@ export default (app) => {
 
     const trades = async (req, res) => {
         if (authCheck(req, res)) {
+            const getBalance = async(config) => {
+                try{
+                    return config ? (await binance.balances(config.pair).toPromise()) : null;
+                }catch(e){
+                    //console.log("Error: " + e.message);
+                    return 0;
+                }
+            };
             const config = (await db.getConfig().toPromise());
+            const rate = (await db.dailySuccessRate().toPromise())[0];
+            const totalTrades = (await db.countTrades().toPromise());
             const page_size = req.query.page_size || 50;
             const page = req.query.page || 1;
-            const rate = (await db.dailySuccessRate().toPromise())[0];
+            const data = (await db.paginateTrades(page_size, page).toPromise());
+            const balance = await getBalance(config);
             res.json({
-                total: (await db.countTrades().toPromise()),
-                data: (await db.paginateTrades(page_size, page).toPromise()),
-                balance: config ? (await binance.balances(config.pair).toPromise()) : null,
+                total: totalTrades,
+                data: data,
+                balance: balance,
                 dailySuccessRate: rate ? rate.rate : 0
             });
         }

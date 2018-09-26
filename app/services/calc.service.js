@@ -24,21 +24,21 @@ export default class Calc {
         let rsi = down == 0 ? 100 : up == 0 ? 0 : 100 - (100 / (1 + up / down));
 
         if (up < 0 || down < 0 || rsi < 0) {
-            console.log("Max: " + Math.max(cur - prev, 0));
-            console.log("Min: " + Math.abs(Math.min(cur - prev, 0)));
-            console.log(`UP: ${up}`);
-            console.log(`Down: ${down}`);
-            console.log(`Current: ${cur}`);
-            console.log(`Prev: ${prev}`);
-            console.log(`RSI: ${rsi}`);
-            console.log(
+            log("Max: " + Math.max(cur - prev, 0));
+            log("Min: " + Math.abs(Math.min(cur - prev, 0)));
+            log(`UP: ${up}`);
+            log(`Down: ${down}`);
+            log(`Current: ${cur}`);
+            log(`Prev: ${prev}`);
+            log(`RSI: ${rsi}`);
+            log(
                 "EMA: " + ((2 / period + 1) * cur) + ((1 - (2 / period + 1)) * prev)
             );
         }
         
         if(rsi > 100){
-            console.log("RSI > 100");
-            console.log("RSI: " + rsi);
+            log("RSI > 100");
+            log("RSI: " + rsi);
         }
 
         return {
