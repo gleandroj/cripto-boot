@@ -1,6 +1,6 @@
 import log from "./logger";
 import Calc from "./calc.service";
-import { roundAmount, roundPrice } from "./helpers";
+import { roundAmount, roundPrice, isValidLot } from "./helpers";
 import { STATUS_OPENED, STATUS_CLOSED } from './exchange/binance-trader';
 
 export class CandleService {
