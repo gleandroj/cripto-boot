@@ -104,7 +104,7 @@ export class CandleService {
                 return;
             }
         }
-
+        return;
         if (
             currentTrade &&
             curr.macd < curr.signal
