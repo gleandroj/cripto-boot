@@ -107,7 +107,7 @@ export class BinanceTrader {
             
             return this.updateSellTrade(trade, binanceTrade);
         } catch (e) {
-            log(`Unable to sell symbol ${symbol}.`)
+            log(`Unable to sell symbol ${trade.symbol}.`)
             log(`'Error: ${e.message}.`);
         }
     }
