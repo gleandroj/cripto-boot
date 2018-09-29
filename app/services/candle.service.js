@@ -92,7 +92,7 @@ export class CandleService {
         const quantity = roundAmount((amount / curr.close), market);
 
         if (currentTrade) {
-            const lastTrade = await this.trader.getLastTrade(trade.symbol);
+            const lastTrade = await this.trader.getLastTrade(currentTrade.symbol);
             const buyOrderId = trade.binanceBuyTrade.orderId;
             const isLastTradeBuy = lastTrade.orderId == buyOrderId;
             if (!isLastTradeBuy && lastTrade.isMaker) {//Trade was stop loss
