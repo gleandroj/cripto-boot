@@ -91,27 +91,23 @@ export class CandleService {
         const market = this.exchangeInfo.find((t) => t.symbol === symbol);
         const quantity = roundAmount((amount / curr.close), market);
 
-        if (
-            isOnRanking &&
-            isSelectedPair &&
-            curr.rsi2.flag == 1 &&
-            (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
-            curr.flagMACD == 1 &&
-            (previous && previous.flagMACD != 1) &&
-            (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
-            isValidLot(curr.close, quantity, market) &&
-            !currentTrade &&
-            trading
-        ) {
-            const trade = await this.trader.buy(symbol, quantity, curr.close, market);
-            if (trade) {
-                await this.database.storeTrade(trade).toPromise();
-                this.openedTrades++;
-                log(`Buy ${trade.symbol}, ${trade.ask_price}`);
+        if (currentTrade) {
+            const lastTrade = await this.trader.getLastTrade(trade.symbol);
+            const buyOrderId = trade.binanceBuyTrade.orderId;
+            const isLastTradeBuy = lastTrade.orderId == buyOrderId;
+            if (!isLastTradeBuy && lastTrade.isMaker) {//Trade was stop loss
+                await this.database.updateTrade(
+                    this.trader.updateSellTrade(currentTrade, lastTrade)
+                ).toPromise();
+                this.openedTrades--;
+                log(`Sell by stop loss ${currentTrade.symbol}, ${currentTrade.bid_price}`);
+                return;
             }
-        } else if (
-            curr.macd < curr.signal &&
-            currentTrade
+        }
+
+        if (
+            currentTrade &&
+            curr.macd < curr.signal
         ) {
             const trade = await this.trader.sell(currentTrade, curr.close, market)
             if (trade) {
@@ -134,6 +130,25 @@ export class CandleService {
                 currentTrade.stopLossOrder = await this.trader.stopLossOrder(symbol, currentTrade.quantity, currentTrade.stop_loss_trigger, currentTrade.stop_loss_sell);
                 await this.database.updateTrade(currentTrade).toPromise();
                 log(`Trailing for ${currentTrade.symbol}, ${currentTrade.stop_loss_sell}`);
+            }
+        }
+        else if (
+            !currentTrade &&
+            trading &&
+            isOnRanking &&
+            isSelectedPair &&
+            curr.rsi2.flag == 1 &&
+            (previous && previous.rsi2 && previous.rsi2.flag != 1) &&
+            curr.flagMACD == 1 &&
+            (previous && previous.flagMACD != 1) &&
+            (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
+            isValidLot(curr.close, quantity, market)
+        ) {
+            const trade = await this.trader.buy(symbol, quantity, curr.close, market);
+            if (trade) {
+                await this.database.storeTrade(trade).toPromise();
+                this.openedTrades++;
+                log(`Buy ${trade.symbol}, ${trade.ask_price}`);
             }
         }
     }

@@ -77,6 +77,16 @@ export class BinanceTrader {
         }
     }
 
+    updateSellTrade(trade, binanceTrade){
+        const tradeRealPrice = parseFloat(binanceTrade.price);
+        trade.status = STATUS_CLOSED;
+        trade.bid_at = moment().valueOf();
+        trade.bid_price = tradeRealPrice;
+        trade.profit = (((trade.bid_price - trade.ask_price) / trade.ask_price) - 0.0015) * 100;
+        trade.binanceSellTrade = binanceTrade;
+        return trade;
+    }
+    
     async sell(trade, price, market) {
         try {
             if (trade.stopLossOrder != null && trade.stopLossOrder.orderId != null) {
@@ -94,16 +104,15 @@ export class BinanceTrader {
                     return this.binance.getLastTrade(trade.symbol);
                 })
             ).toPromise();
-            const tradeRealPrice = parseFloat(binanceTrade.price);
-            trade.status = STATUS_CLOSED;
-            trade.bid_at = moment().valueOf();
-            trade.bid_price = tradeRealPrice;
-            trade.profit = (((trade.bid_price - trade.ask_price) / trade.ask_price) - 0.0015) * 100;
-            trade.binanceSellTrade = binanceTrade;
-            return trade;
+            
+            return this.updateSellTrade(trade, binanceTrade);
         } catch (e) {
             log(`Unable to sell symbol ${symbol}.`)
             log(`'Error: ${e.message}.`);
         }
+    }
+
+    async getLastTrade(symbol){
+        return await this.binance.getLastTrade(symbol).toPromise();
     }
 }
