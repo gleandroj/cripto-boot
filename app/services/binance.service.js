@@ -98,7 +98,7 @@ export class BinanceService {
         );
     }
 
-    stopLoss(symbol, qty, stopPriceTrigger, stopPriceSell) {
+    stopLoss(symbol, qty, stopPriceTrigger, stopPriceSell, isTrailing) {
         return from(
             this.binance.order({
                 symbol: symbol,
@@ -108,7 +108,18 @@ export class BinanceService {
                 stopPrice: stopPriceTrigger,
                 price: stopPriceSell
             })
-        );
+        ).pipe(map(order => {
+            return {
+                symbol: symbol,
+                orderId: order.orderId,
+                clientOrderId: order.clientOrderId,
+                transactTime: order.transactTime,
+                quantity: qty,
+                stopPriceTrigger: stopPriceTrigger,
+                stopPriceSell: stopPriceSell,
+                isTrailing: isTrailing ? isTrailing : false
+            };
+        }));
     }
 
     cancelOrder(symbol, orderId) {
@@ -139,7 +150,7 @@ export class BinanceService {
     }
 
     async wsLive(timeFrame) {
-        //const symbols = ['XRPBTC'];
+        //const symbols = ['BCCBTC'];
         const symbols = await this.symbols().toPromise();
         log(`Awaiting for price changes of ${symbols.length} symbols.`);
         this.logLive();

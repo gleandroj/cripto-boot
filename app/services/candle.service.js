@@ -1,9 +1,7 @@
 import log from "./logger";
 import Calc from "./calc.service";
-import { roundAmount, isValidLot } from "./helpers";
-
-export const STATUS_OPENED = 0;
-export const STATUS_CLOSED = 1;
+import { roundAmount, roundPrice } from "./helpers";
+import { STATUS_OPENED, STATUS_CLOSED } from './exchange/binance-trader';
 
 export class CandleService {
 
@@ -102,10 +100,10 @@ export class CandleService {
             (previous && previous.flagMACD != 1) &&
             (maxTrades && openedTrades != null && openedTrades < maxTrades) &&
             isValidLot(curr.close, quantity, market) &&
-            !currentTrade
-            && trading
+            !currentTrade &&
+            trading
         ) {
-            const trade = await this.trader.buy(symbol, quantity, price, market);
+            const trade = await this.trader.buy(symbol, quantity, curr.close, market);
             if (trade) {
                 await this.database.storeTrade(trade).toPromise();
                 this.openedTrades++;
@@ -120,6 +118,22 @@ export class CandleService {
                 await this.database.updateTrade(trade).toPromise();
                 this.openedTrades--;
                 log(`Sell ${trade.symbol}, ${trade.bid_price}`);
+            }
+        } else if (
+            currentTrade &&
+            currentTrade.stopLossOrder &&
+            !currentTrade.stopLossOrder.isTrailing
+        ) {
+            const price = curr.close;
+            const buyPrice = currentTrade.ask_price;
+            if (price >= (buyPrice * 1.005)) {
+                const oldStopLossOrderId = currentTrade.stopLossOrder.orderId;
+                currentTrade.stop_loss_trigger = roundPrice(buyPrice * 1.002, market);
+                currentTrade.stop_loss_sell = roundPrice(buyPrice * 1.0018, market);
+                await this.trader.cancelOrder(symbol, oldStopLossOrderId);
+                currentTrade.stopLossOrder = await this.trader.stopLossOrder(symbol, currentTrade.quantity, currentTrade.stop_loss_trigger, currentTrade.stop_loss_sell);
+                await this.database.updateTrade(currentTrade).toPromise();
+                log(`Trailing for ${currentTrade.symbol}, ${currentTrade.stop_loss_sell}`);
             }
         }
     }

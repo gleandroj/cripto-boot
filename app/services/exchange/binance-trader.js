@@ -1,3 +1,11 @@
+import moment from 'moment-timezone';
+import log from './../logger';
+import { delay, switchMap } from 'rxjs/operators';
+import { roundPrice } from "./../helpers";
+
+export const STATUS_OPENED = 0;
+export const STATUS_CLOSED = 1;
+
 export class BinanceTrader {
 
     constructor(binance) {
@@ -65,7 +73,7 @@ export class BinanceTrader {
             };
         } catch (e) {
             log(`Unable to buy symbol ${symbol}.`)
-            log(`'Error: ${e.message}.`);
+            log(`Error: ${e.message}.`);
         }
     }
 
