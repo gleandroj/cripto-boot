@@ -128,6 +128,7 @@ export class CandleService {
                 currentTrade.stop_loss_sell = roundPrice(buyPrice * 1.0018, market);
                 await this.trader.cancelOrder(symbol, oldStopLossOrderId);
                 currentTrade.stopLossOrder = await this.trader.stopLossOrder(symbol, currentTrade.quantity, currentTrade.stop_loss_trigger, currentTrade.stop_loss_sell);
+                currentTrade.stopLossOrder.isTrailing = true;
                 await this.database.updateTrade(currentTrade).toPromise();
                 log(`Trailing for ${currentTrade.symbol}, ${currentTrade.stop_loss_sell}`);
             }
