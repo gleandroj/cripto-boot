@@ -49,7 +49,9 @@ export default class BackgroundWorker {
             this.config.rsi_sensibility != null &&
             this.config.running != null &&
             this.config.running === true &&
-            this.config.simultaneous_trade != null
+            this.config.simultaneous_trade != null &&
+            this.config.macd_fast_period != null &&
+            this.config.macd_slow_period != null
         ) {
             log('---------------------');
             log(`Exchange: Binance.`);
@@ -61,8 +63,10 @@ export default class BackgroundWorker {
             log(`Maximum Amount per Trade: ${this.config.max_amout_per_trade}.`);
             log(`Coin choice interval (minutes): ${this.config.coin_choice_interval} min.`);
             log(`Coin Ranking Max: ${this.config.coin_ranking_max}.`);
+            log(`MACD Fast Period: ${this.config.macd_fast_period}.`);
+            log(`MACD Slow Period : ${this.config.macd_slow_period}.`);
             log(`Trading: ${this.config.trading}.`)
-            log('---------------------')
+            log('---------------------');
             this.candleService = new CandleService(
                 new BinanceTrader(this.binance),
                 this.database,

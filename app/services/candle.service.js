@@ -46,8 +46,8 @@ export class CandleService {
         const haMax = Math.max(candle.high, haOpen, haClose);
         const haMin = Math.min(candle.low, haOpen, haClose);
 
-        const fastMA = this.calc.ema(haClose, prev.fastMA, 12);
-        const slowMA = this.calc.ema(haClose, prev.slowMA, 26);
+        const fastMA = this.calc.ema(haClose, prev.fastMA, this.config.macd_fast_period);
+        const slowMA = this.calc.ema(haClose, prev.slowMA, this.config.macd_slow_period);
         const macd = fastMA - slowMA;
         const signal = this.calc.ema(macd, prev.macd, 9);
         const hist = macd - signal;
