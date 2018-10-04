@@ -49,7 +49,7 @@ export class CandleService {
         const fastMA = this.calc.ema(haClose, prev.fastMA, this.config.macd_fast_period);
         const slowMA = this.calc.ema(haClose, prev.slowMA, this.config.macd_slow_period);
         const macd = fastMA - slowMA;
-        const signal = this.calc.ema(macd, prev.macd, 9);
+        const signal = this.calc.ema(macd, prev.macd, this.config.macd_signal_period);
         const hist = macd - signal;
 
         const computed = {

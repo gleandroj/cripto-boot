@@ -80,6 +80,7 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
             coin_ranking_max: null,
             macd_fast_period: null,
             macd_slow_period: null,
+            macd_signal_period: null,
             running: false,
             trading: false
         };
