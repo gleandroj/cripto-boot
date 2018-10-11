@@ -138,7 +138,7 @@ export default class DatabaseService {
 
     appreciation(pair, interval, limit) {
         return from(
-            this.db.collection('candles').aggregate(
+            this.db.collection('computed_candles').aggregate(
                 [
                     {
                         $match: {
@@ -187,7 +187,7 @@ export default class DatabaseService {
         return from(
             this.db.collection('computed_candles').aggregate(
                 [
-                    { $match: { symbol: { $regex: 'BTC$' } } },
+                    { $match: { symbol: { $regex: `${pair}$` } } },
                     { $sort: { _id: -1 } },
                     { $group: { _id: '$symbol', last: { $first: "$$ROOT" } } },
                     {
