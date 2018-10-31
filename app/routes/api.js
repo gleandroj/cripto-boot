@@ -20,7 +20,17 @@ export default (app) => {
 
     const getConfig = async (req, res) => {
         if (authCheck(req, res)) {
-            res.json(await db.getConfig().toPromise());
+            const setup = await db.getConfig().toPromise();
+            let coins = [];
+            if(setup){
+                coins = (await binance.symbols().toPromise()).filter((s) => (new RegExp(`${setup.pair}$`)).test(s));
+            }else{
+                coins = await binance.symbols().toPromise();
+            }
+            res.json({
+                setup: setup,
+                coins: coins
+            });
         }
     };
 

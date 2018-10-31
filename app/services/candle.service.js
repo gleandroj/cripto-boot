@@ -9,7 +9,7 @@ export class CandleService {
         this.trader = trader;
         this.database = database;
         this.config = config;
-        this.ranking = [];
+        this.coins = [];
         this.openedTrades = null;
         this.exchangeInfo = null;
     }
@@ -24,15 +24,7 @@ export class CandleService {
         log('Initializing Exchange Market Data.');
         this.exchangeInfo = await this.trader.exchangeInfo();
         this.calc = new Calc(this.config.rsi_sensibility);
-    }
-
-    async updateRanking() {
-        const interval = this.config.coin_choice_interval ? this.config.coin_choice_interval : 0;
-        const pair = this.config && this.config.pair ? this.config.pair : null;
-        const max = this.config && this.config.coin_ranking_max ? this.config.coin_ranking_max : 5;
-        this.ranking = await this.database.volume(pair, interval, max).toPromise();
-        const newRanking = this.ranking.map((t) => `${t.symbol}, Percent: ${t.percent}`);
-        log(`Ranking updated: ${newRanking.join(' | ')}`);
+        this.coins = this.config.coins;
     }
 
     async checkCandle(candle) {
@@ -86,7 +78,7 @@ export class CandleService {
 
         const isSelectedPair = (new RegExp(`${pair}$`)).test(curr.symbol);
         const openedTrades = this.openedTrades;
-        const isOnRanking = this.ranking.findIndex((t) => t.symbol === symbol) > -1;
+        const isOnRanking = this.coins.findIndex((c) => c === symbol) > -1;
         const currentTrade = await this.database.lastTrade(symbol, STATUS_OPENED).toPromise();
         const market = this.exchangeInfo.find((t) => t.symbol === symbol);
         const quantity = roundAmount((amount / curr.close), market);

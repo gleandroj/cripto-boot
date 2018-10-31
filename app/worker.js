@@ -31,10 +31,6 @@ export default class BackgroundWorker {
         }
     }
 
-    checkRanking() {
-        this.candleService.updateRanking().then(() => { });
-    }
-
     async initialize(config) {
         this.destroy();
         this.config = config ? config : await this.database.getConfig().toPromise();
@@ -42,8 +38,7 @@ export default class BackgroundWorker {
         if (
             this.config != null &&
             this.config.candle_interval != null &&
-            this.config.coin_choice_interval != null &&
-            this.config.coin_ranking_max != null &&
+            this.config.coins != null &&
             this.config.max_amout_per_trade != null &&
             this.config.pair != null &&
             this.config.rsi_sensibility != null &&
@@ -62,8 +57,7 @@ export default class BackgroundWorker {
             log(`Candle interval: ${this.config.candle_interval}.`);
             log(`RSI Sensibility: ${this.config.rsi_sensibility}.`);
             log(`Maximum Amount per Trade: ${this.config.max_amout_per_trade}.`);
-            log(`Coin choice interval (minutes): ${this.config.coin_choice_interval} min.`);
-            log(`Coin Ranking Max: ${this.config.coin_ranking_max}.`);
+            log(`Coins: ${this.config.coins.join(',')}.`);
             log(`MACD Fast Period: ${this.config.macd_fast_period}.`);
             log(`MACD Slow Period : ${this.config.macd_slow_period}.`);
             log(`MACD Signal Period: ${this.config.macd_signal_period}`);
@@ -74,14 +68,8 @@ export default class BackgroundWorker {
                 this.database,
                 this.config
             );
-
             await this.candleService.initialize();
-            await this.candleService.updateRanking();
-
             this.waitForCandles(this.config.candle_interval);
-            this.checkRankingInterval = interval(this.config.coin_choice_interval * (1000 * 60))
-                .subscribe(() => this.checkRanking());
-
         }
     }
 

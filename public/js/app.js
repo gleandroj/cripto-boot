@@ -1,4 +1,4 @@
-angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
+angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap', 'ui.select', 'ngSanitize'])
     .config(function ($urlRouterProvider, $stateProvider) {
         $stateProvider.state({
             name: 'login',
@@ -43,6 +43,7 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
         if (!localStorage.getItem('auth-token')) {
             $state.go('login');
         }
+        $scope.coins = [];
         $scope.timeFrames = [
             '1m',
             '3m',
@@ -76,8 +77,7 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
             candle_interval: null,
             rsi_sensibility: null,
             max_amout_per_trade: null,
-            coin_choice_interval: null,
-            coin_ranking_max: null,
+            coins: [],
             macd_fast_period: null,
             macd_slow_period: null,
             macd_signal_period: null,
@@ -119,9 +119,11 @@ angular.module('tradeApp', ['ui.router', 'ngAnimate', 'toastr', 'ui.bootstrap'])
         };
 
         $scope.getServerData = function () {
-            $http.get('/api/setup').then((config) => {
-                if (config.data) {
-                    $scope.setup = config.data;
+            $http.get('/api/setup').then((response) => {
+                if (response.data) {
+                    const data = response.data;
+                    $scope.setup = data.setup || $scope.setup;
+                    $scope.coins = data.coins || [];
                 }
             }, (response) => {
                 if (response.status == 401) {
